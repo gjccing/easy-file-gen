@@ -1,5 +1,5 @@
 {
-  "name": "example-with-tailwindcss",
+  "name": "easy-file-gen-dashboard",
   "type": "module",
   "scripts": {
     "dev": "vinxi dev",
@@ -8,11 +8,14 @@
   },
   "dependencies": {
     "@kobalte/core": "^0.13.4",
+    "@modular-forms/solid": "^0.22.1",
     "@solidjs/router": "^0.14.1",
     "@solidjs/start": "^1.0.6",
+    "@valibot/valibot": "npm:@jsr/valibot__valibot@^0.36.0",
     "autoprefixer": "^10.4.19",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "firebase": "^10.12.4",
     "postcss": "^8.4.38",
     "solid-js": "^1.8.18",
     "tailwind-merge": "^2.4.0",
