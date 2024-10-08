@@ -1,11 +1,11 @@
-import { type JSX } from "solid-js"
+import { type JSX } from "solid-js";
 import { Suspense } from "solid-js";
-import Nav from "./Nav";
+import NonAuthNav from "./NonAuthNav";
 
-export default function NonAuthLayout(props: { children?: JSX.Element; }) {
+export default function NonAuthLayout(props: { children?: JSX.Element }) {
   return (
     <div>
-      <Nav />
+      <NonAuthNav />
       <Suspense>{props.children}</Suspense>
     </div>
   );

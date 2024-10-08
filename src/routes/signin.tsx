@@ -11,9 +11,10 @@ export default function Signin() {
   const navigate = useNavigate();
   onMount(() => {
     auth.onAuthStateChanged(() => {
-      if (auth.currentUser !== null) navigate("/template", { replace: true });
+      if (auth.currentUser !== null) navigate("/templates", { replace: true });
     });
   });
+
   return (
     <div class="container relative h-svh flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
       <a
@@ -48,7 +49,7 @@ export default function Signin() {
             </h1>
             <p class="text-sm text-muted-foreground">Enter your email below</p>
           </div>
-          <UserAuthForm />
+          <UserAuthForm onLogin={() => navigate("/templates")} />
           <p class="px-8 text-center text-sm text-muted-foreground">
             By clicking continue, you agree to our{" "}
             <a

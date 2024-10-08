@@ -3,7 +3,7 @@ import { useNavigate } from "@solidjs/router";
 import { signOut } from "firebase/auth";
 import { auth } from "~/lib/firebase";
 
-export default function Nav() {
+export default function NonAuthNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const active = (path: string) =>

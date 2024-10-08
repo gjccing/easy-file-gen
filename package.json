@@ -4,18 +4,24 @@
   "scripts": {
     "dev": "vinxi dev",
     "build": "vinxi build",
-    "start": "vinxi start"
+    "start": "vinxi start",
+    "set-cors": "gsutil cors set cors.json gs://easy-file-gen.appspot.com"
   },
   "dependencies": {
-    "@kobalte/core": "^0.13.4",
+    "@corvu/resizable": "^0.2.3",
+    "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
+    "@kobalte/core": "^0.13.6",
     "@modular-forms/solid": "^0.22.1",
+    "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.14.1",
     "@solidjs/start": "^1.0.6",
-    "@valibot/valibot": "npm:@jsr/valibot__valibot@^0.36.0",
+    "@valibot/valibot": "npm:@jsr/valibot__valibot@^0.39.0",
     "autoprefixer": "^10.4.19",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "firebase": "^10.12.4",
+    "lodash": "^4.17.21",
+    "monaco-editor": "^0.51.0",
     "postcss": "^8.4.38",
     "solid-js": "^1.8.18",
     "tailwind-merge": "^2.4.0",
@@ -24,6 +30,6 @@
     "vinxi": "^0.4.1"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.11.1"
   }
 }

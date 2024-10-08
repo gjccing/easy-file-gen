@@ -1,6 +1,5 @@
 import type { SubmitHandler } from "@modular-forms/solid";
 import { createForm, valiForm } from "@modular-forms/solid";
-import { useNavigate } from "@solidjs/router";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
@@ -26,15 +25,14 @@ import {
 import { AuthSchema } from "./validations/auth";
 import type { AuthForm } from "./validations/auth";
 
-export function UserAuthForm() {
+export function UserAuthForm(props: { onLogin: () => void }) {
   const [authForm, { Form, Field }] = createForm<AuthForm>({
     validate: valiForm(AuthSchema),
   });
 
-  const navigate = useNavigate();
   const handleSubmit: SubmitHandler<AuthForm> = async (values) => {
     await createUserWithEmailAndPassword(auth, values.email, values.password);
-    navigate("/template");
+    props.onLogin();
   };
 
   const OAuthHandlerFactory = (providerName: string) => {
@@ -48,7 +46,7 @@ export function UserAuthForm() {
     return async () => {
       if (provider) {
         await signInWithPopup(auth, new provider());
-        navigate("/template");
+        props.onLogin();
       }
     };
   };
@@ -68,7 +66,7 @@ export function UserAuthForm() {
                 <TextFieldLabel class="sr-only">Email</TextFieldLabel>
                 <TextFieldInput
                   classList={{
-                    "border-destructive": field.dirty && field.error,
+                    "border-destructive": Boolean(field.dirty && field.error),
                   }}
                   {...props}
                   type="email"
@@ -91,7 +89,7 @@ export function UserAuthForm() {
                 <TextFieldLabel class="sr-only">Email</TextFieldLabel>
                 <TextFieldInput
                   classList={{
-                    "border-destructive": field.dirty && field.error,
+                    "border-destructive": Boolean(field.dirty && field.error),
                   }}
                   {...props}
                   type="password"
