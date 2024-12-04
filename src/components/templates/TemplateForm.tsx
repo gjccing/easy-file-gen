@@ -7,8 +7,8 @@ import {
   reset,
 } from "@modular-forms/solid";
 import { TextFieldInput, TextFieldTextArea } from "~/components/ui/text-field";
-import type { InferInput } from "@valibot/valibot";
-import * as v from "@valibot/valibot";
+import type { InferInput } from "valibot";
+import * as v from "valibot";
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { IconLoader } from "~/components/icons";

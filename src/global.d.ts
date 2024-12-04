@@ -16,6 +16,11 @@ export enum SupportedEngine {
   "@react-pdf/renderer@3.4.4" = "@react-pdf/renderer@3.4.4",
 }
 
+export enum WebhookType {
+  FINISHED = "FINISHED",
+  ERROR = "ERROR",
+}
+
 declare global {
   interface EDITOR_PRESET {
     createEditorConstructionOptions?: (
@@ -34,9 +39,9 @@ declare global {
   namespace Model {
     // Webhook interface
     interface Webhook {
-      type: "finished" | "error";
+      type: WebhookType;
       url: string;
-      enabled: boolean;
+      retryLimit: number;
     }
 
     // Access Control Management:
@@ -45,15 +50,8 @@ declare global {
         token: string; // prevent users' template from being misused by others.
         expiresAt?: Timestamp;
       };
-      authAPI: {
-        url: string;
-        headers: [string, string][];
-      };
       accessControlAllowOrigin: string[]; // prevent users' templates from being misused by other sites. the default is *
-      webhook: {
-        retryLimit: number; // default is 0
-        hooks: Webhook[];
-      }; // users can set webhooks to get notified when their file is done, I will send notifications according to these settings.
+      webhooks: Webhook[]; // users can set webhooks to get notified when their file is done, I will send notifications according to these settings.
     }
 
     // Template interface: Preset templates for file generation.

@@ -1,5 +1,5 @@
 {
-  "name": "easy-file-gen-dashboard",
+  "name": "easy-file-gen",
   "type": "module",
   "scripts": {
     "dev": "vinxi dev",
@@ -15,7 +15,6 @@
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.14.1",
     "@solidjs/start": "^1.0.6",
-    "@valibot/valibot": "npm:@jsr/valibot__valibot@^0.39.0",
     "autoprefixer": "^10.4.19",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -27,6 +26,7 @@
     "tailwind-merge": "^2.4.0",
     "tailwindcss": "^3.4.7",
     "tailwindcss-animate": "^1.0.7",
+    "valibot": "^0.42.1",
     "vinxi": "^0.4.1"
   },
   "engines": {

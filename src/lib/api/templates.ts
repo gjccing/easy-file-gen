@@ -83,6 +83,7 @@ export const getTemplateDocsEndBeforeCreateAt = async (
 };
 
 export const getTemplateById = async (id: string) => {
+  await auth.authStateReady();
   const templateDoc = (await getDoc(
     doc(db, "templates", id)
   )) as DocumentSnapshot<Model.Template>;
@@ -93,6 +94,7 @@ export const getTemplateById = async (id: string) => {
 };
 
 export const getTemplateAndContentById = async (id: string) => {
+  await auth.authStateReady();
   const templateDoc = (await getDoc(
     doc(db, "templates", id)
   )) as DocumentSnapshot<Model.Template>;
@@ -125,6 +127,7 @@ export const createNewTemplate = async ({
   enabled: boolean;
   content: File;
 }) => {
+  await auth.authStateReady();
   const id = firestoreAutoId();
   const contentStorageRef = `/users/${auth.currentUser?.uid}/${id}-${content.name}`;
   const template: Model.Template = {
@@ -152,8 +155,8 @@ export const updateTemplate = async ({
   content,
   ...template
 }: Model.Template & { content: File }) => {
+  await auth.authStateReady();
   template.editedAt = Timestamp.now();
-  debugger;
   return await Promise.all([
     setDoc(doc(db, "templates", template.id), template),
     content.text().then((text) =>
@@ -165,6 +168,7 @@ export const updateTemplate = async ({
 };
 
 export const enableTemplateById = async (id: string, enabled: boolean) => {
+  await auth.authStateReady();
   return await updateDoc(doc(db, "templates", id), {
     enabled,
     editedAt: Timestamp.now(),
@@ -172,6 +176,7 @@ export const enableTemplateById = async (id: string, enabled: boolean) => {
 };
 
 export const deleteTemplateById = async (id: string) => {
+  await auth.authStateReady();
   return await updateDoc(doc(db, "templates", id), {
     isDeleted: true,
     editedAt: Timestamp.now(),

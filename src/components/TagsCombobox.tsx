@@ -25,7 +25,6 @@ export default function TagsCombobox(props: {
   value?: string[];
   onChange?: (value: string[] | undefined) => void;
 }) {
-  console.log(props.value);
   return (
     <>
       <TextFieldInput

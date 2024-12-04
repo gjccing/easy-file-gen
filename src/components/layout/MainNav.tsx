@@ -22,6 +22,14 @@ export default function MainNav(props: ComponentProps<"nav">) {
       >
         Templates
       </A>
+      <A
+        href="/settings"
+        class={`text-sm font-medium ${active(
+          "/settings"
+        )} transition-colors hover:text-primary`}
+      >
+        Settings
+      </A>
     </nav>
   );
 }

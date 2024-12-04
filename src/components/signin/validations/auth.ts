@@ -1,4 +1,4 @@
-import type { InferInput } from "@valibot/valibot";
+import type { InferInput } from "valibot";
 import {
   email,
   object,
@@ -8,7 +8,7 @@ import {
   minLength,
   maxLength,
   regex,
-} from "@valibot/valibot";
+} from "valibot";
 
 export const AuthSchema = object({
   email: pipe(

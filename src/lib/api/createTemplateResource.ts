@@ -6,8 +6,10 @@ import { getTemplateById } from "~/lib/api/templates";
 export function createTemplateResource(props: { templateId: string }) {
   const [template, setTemplate] = createSignal<Model.Template>();
   const [error, setError] = createSignal<any>();
+  const [loading, setLoading] = createSignal<boolean>();
   const loadTemplate = async () => {
     try {
+      setLoading(true);
       setTemplate(await getTemplateById(props.templateId));
     } catch (e) {
       if (e instanceof FirebaseError) {
@@ -24,8 +26,10 @@ export function createTemplateResource(props: { templateId: string }) {
         });
       setError(e);
       console.error(e);
+    } finally {
+      setLoading(false);
     }
   };
   onMount(loadTemplate);
-  return [template, error];
+  return [template, error, loadTemplate, loading];
 }

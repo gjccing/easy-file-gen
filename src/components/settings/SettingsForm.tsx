@@ -1,92 +1,32 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, For } from "solid-js";
 import type { SubmitHandler } from "@modular-forms/solid";
-import { createForm, valiForm, setValue } from "@modular-forms/solid";
 import {
-  TextFieldLabel,
-  TextField,
-  TextFieldInput,
-  TextFieldTextArea,
-  TextFieldErrorMessage,
-  TextFieldDescription,
-} from "~/components/ui/text-field";
-import type { InferInput } from "@valibot/valibot";
-import * as v from "@valibot/valibot";
+  createForm,
+  valiForm,
+  setValue,
+  insert,
+  remove,
+} from "@modular-forms/solid";
+import { TextFieldInput } from "~/components/ui/text-field";
+import FieldSet from "~/components/FieldSet";
+import type { InferInput } from "valibot";
+import * as v from "valibot";
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
-import { IconLoader, IconCopy, IconTrash } from "~/components/icons";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
+import { IconLoader, IconCopy, IconX } from "~/components/icons";
 import { Separator } from "~/components/ui/separator";
-import { Switch, SwitchControl, SwitchThumb } from "~/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { WebhookType } from "~/global.d";
+import WebhookTypeSelect from "./WebhookTypeSelect";
+import WebhookDeleteDialog from "./WebhookDeleteDialog";
 
-const OUTPUT_TYPE_MAP: Record<string, string> = {
-  PDF: "PDF Document (.pdf)",
-  DOCX: "Microsoft Word (.docx)",
-  EPUB: "EPUB Publication (.epub)",
-  TXT: "Plain Text (.txt)",
-  RTF: "Rich Text Format (.rtf)",
-};
-
-const TemplateSchema = v.object({
-  apiToken: v.object({
-    token: v.pipe(
-      v.string(),
-      v.minLength(50, "The token is too short."),
-      v.maxLength(150, "The token is too long."),
-      v.base64("Please enter a Base64 string."),
-      v.nonEmpty(
-        "Please generate or give an API token to protect your resource."
-      )
-    ),
-    expiresAt: v.union([
-      v.pipe(v.string(), v.isoDateTime("The date is badly formatted.")),
-      v.literal(""),
-    ]),
-  }),
-  accessControlAllowOrigin: v.array(
-    v.object({
-      origin: v.pipe(
-        v.string(),
-        v.regex(
-          /^[(http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}$/,
-          "Please enter a formatted origin, such as https://example.com"
-        )
-      ),
-      enabled: v.boolean(),
-    })
-  ),
-  webhooks: v.array(
-    v.object({
-      type: v.picklist(["finished", "error"]),
-      targetUrl: v.pipe(
-        v.string(),
-        v.regex(
-          /^[(http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/,
-          "Please enter a formatted url, such as http://example.com/path"
-        )
-      ),
-      headers: v.record(v.string(), v.string()),
-      retryLimit: v.number(),
-      enabled: v.boolean(),
-    })
-  ),
-});
-
-type SettingsFormValues = InferInput<typeof TemplateSchema>;
-
-function generateRandomVisibleString(length: number): string {
+function genRandAlphanumericStr(length: number): string {
   const charset =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+[]{}|;:,.<>?";
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
   for (let i = 0; i < length; i++) {
     const randomIndex = Math.floor(Math.random() * charset.length);
@@ -95,256 +35,293 @@ function generateRandomVisibleString(length: number): string {
   return result;
 }
 
-export function SettingsForm(props: {
+const SettingsSchema = v.object({
+  apiToken: v.object({
+    token: v.pipe(
+      v.string(),
+      v.nonEmpty(
+        "Please generate or give an API token to protect your resource."
+      ),
+      v.regex(
+        /^[A-Za-z0-9]+$/,
+        "Please only enter an alphanumeric string which only includes A-B, a-b, 0-9."
+      ),
+      v.minLength(50, "The token is too short. Please over 50"),
+      v.maxLength(150, "The token is too long.")
+    ),
+    expiresAt: v.union([
+      v.pipe(v.string(), v.isoDateTime("The date is badly formatted.")),
+      v.literal(""),
+    ]),
+  }),
+  accessControlAllowOrigin: v.undefinedable(
+    v.array(
+      v.pipe(
+        v.string(),
+        v.nonEmpty("Please enter an allowed origin"),
+        v.regex(
+          /^(http(s)?):\/\/(www\.)?[a-zA-Z0-9@%._\+~#=]{2,256}(:\d+)?$/,
+          "Please enter a formatted origin, such as https://example.com"
+        )
+      )
+    )
+  ),
+  webhooks: v.undefinedable(
+    v.pipe(
+      v.array(
+        v.object({
+          type: v.enum(WebhookType, "Invalid output file type"),
+          url: v.pipe(
+            v.string(),
+            v.nonEmpty("Please enter an URL"),
+            v.regex(
+              /^(http(s)?):\/\/(www\.)?[a-zA-Z0-9@%._\+~#=]{2,256}(:\d+)?(\/[-a-zA-Z0-9@%_\+.~#?&//=]*)?$/,
+              "Please enter a formatted url, such as http://example.com/path"
+            )
+          ),
+          retryLimit: v.pipe(v.number(), v.minValue(1), v.maxValue(5)),
+        })
+      ),
+      v.maxLength(3)
+    )
+  ),
+});
+
+export type SettingsFormValues = InferInput<typeof SettingsSchema>;
+
+export default function SettingsForm(props: {
   class?: string | undefined;
-  defaultValue?: Model.Template;
-  onSubmit: SubmitHandler<SettingsFormValues>;
+  defaultValue?: SettingsFormValues;
+  onSubmit: (value: SettingsFormValues) => void;
 }) {
-  const [templateForm, { Form, Field, FieldArray }] =
+  const [settingsForm, { Form, Field, FieldArray }] =
     createForm<SettingsFormValues>({
-      validate: valiForm(TemplateSchema),
-      initialValues: {
+      validate: valiForm(SettingsSchema),
+      initialValues: props.defaultValue ?? {
         accessControlAllowOrigin: [],
+        webhooks: [],
       },
     });
-
   const [showCopiedTooltip, setOpenopiedTooltip] = createSignal(false);
-
   return (
     <Form class={cn("grid gap-6", props.class)} onSubmit={props.onSubmit}>
-      <Field name="enabled" type="boolean">
-        {(field) => (
-          <TextField
-            class="space-y-2 md:space-y-0 md:space-x-2 md:flex md:items-center"
-            validationState={field.active && field.error ? "invalid" : "valid"}
-          >
-            <TextFieldLabel class="md:shrink-0 md:w-32">Enable</TextFieldLabel>
-            <Switch
-              checked={field.value}
-              onChange={(value) => setValue(templateForm, field.name, value)}
-            >
-              <SwitchControl>
-                <SwitchThumb />
-              </SwitchControl>
-            </Switch>
-          </TextField>
-        )}
-      </Field>
-      <Field name="outputType" type="string">
-        {(field) => (
-          <TextField
-            class="space-y-2 md:space-y-0 md:space-x-2 md:flex md:items-center"
-            validationState={field.active && field.error ? "invalid" : "valid"}
-          >
-            <TextFieldLabel class="md:shrink-0 md:w-32">
-              Output Type
-            </TextFieldLabel>
-            <div class="md:flex-grow md:space-y-2">
-              <Select
-                disallowEmptySelection
-                options={Object.keys(OUTPUT_TYPE_MAP)}
-                itemComponent={(props) => (
-                  <SelectItem item={props.item}>
-                    <p>{props.item.key}</p>
-                    <p class="text-sm text-muted-foreground">
-                      {OUTPUT_TYPE_MAP[props.item.key]}
-                    </p>
-                  </SelectItem>
-                )}
-                value={field.value}
-                onChange={(value) => setValue(templateForm, field.name, value)}
-              >
-                <SelectTrigger class="w-auto">
-                  <SelectValue<string>>
-                    {(state) => state.selectedOption()}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent />
-              </Select>
-              <TextFieldErrorMessage class="text-destructive">
-                {field.error}
-              </TextFieldErrorMessage>
-            </div>
-          </TextField>
-        )}
-      </Field>
-      <Field name="name" type="string">
-        {(field, props) => (
-          <TextField
-            class="space-y-2 md:space-y-0 md:space-x-2 md:flex md:items-center"
-            validationState={field.active && field.error ? "invalid" : "valid"}
-          >
-            <TextFieldLabel class="md:shrink-0 md:w-32">Name</TextFieldLabel>
-            <div class="md:flex-grow md:space-y-2">
-              <TextFieldInput
-                {...props}
-                class="w-[50%]"
-                maxlength="100"
-                type="text"
-              />
-              <Show when={!(field.active && field.error)}>
-                <TextFieldDescription>
-                  Required. Please keep the name within 100 characters.
-                </TextFieldDescription>
-              </Show>
-              <TextFieldErrorMessage class="text-destructive">
-                {field.error}
-              </TextFieldErrorMessage>
-            </div>
-          </TextField>
-        )}
-      </Field>
-      <Field name="description" type="string">
-        {(field, props) => (
-          <TextField
-            class="space-y-2 md:space-y-0 md:space-x-2 md:flex md:items-center"
-            validationState={field.active && field.error ? "invalid" : "valid"}
-          >
-            <TextFieldLabel class="md:shrink-0 md:w-32">
-              Description
-            </TextFieldLabel>
-            <div class="md:flex-grow md:space-y-2">
-              <TextFieldTextArea {...props} maxlength="500" autoResize />
-              <Show when={!(field.active && field.error)}>
-                <TextFieldDescription>
-                  Please keep the description within 500 characters.
-                </TextFieldDescription>
-              </Show>
-              <TextFieldErrorMessage class="text-destructive">
-                {field.error}
-              </TextFieldErrorMessage>
-            </div>
-          </TextField>
-        )}
-      </Field>
-      <Separator />
-      <h3>API Token</h3>
-      <p class="text-sm"></p>
       <Field name="apiToken.token" type="string">
         {(field, props) => (
-          <TextField
-            class="space-y-2 md:space-y-0 md:space-x-2 md:flex md:items-center"
-            validationState={field.active && field.error ? "invalid" : "valid"}
+          <FieldSet
+            label="Token"
+            description="Required. Please enter an alphanumeric string which only includes A-B, a-b, 0-9. The token is required to call the generating file API to prevent your template from being abused. Please keep the token between 50 and 150 characters."
+            invalid={Boolean(field.active && field.error)}
+            error={field.active ? field.error : undefined}
           >
-            <TextFieldLabel class="md:shrink-0 md:w-32">Token</TextFieldLabel>
-            <div class="md:flex-grow md:space-y-2">
-              <div class="flex space-x-2">
-                <TextFieldInput
-                  {...props}
-                  value={field.value}
-                  minLength="50"
-                  maxlength="150"
-                  type="text"
-                  class="flex-auto"
-                />
-                <Button
+            <div class="flex space-x-2">
+              <TextFieldInput
+                {...props}
+                value={field.value}
+                minLength="50"
+                maxlength="150"
+                type="text"
+                class="flex-auto"
+              />
+              <Button
+                class="shrink-0"
+                onClick={() =>
+                  setValue(
+                    settingsForm,
+                    field.name,
+                    genRandAlphanumericStr(100)
+                  )
+                }
+              >
+                Generate Token
+              </Button>
+              <Tooltip open={showCopiedTooltip()}>
+                <TooltipTrigger
                   class="shrink-0"
-                  onClick={() =>
-                    setValue(
-                      templateForm,
-                      field.name,
-                      btoa(generateRandomVisibleString(100))
-                    )
-                  }
+                  as={Button<"button">}
+                  variant="secondary"
+                  onMouseLeave={() => setOpenopiedTooltip(false)}
+                  onClick={() => {
+                    navigator.clipboard.writeText(field.value ?? "");
+                    setOpenopiedTooltip(true);
+                  }}
                 >
-                  Generate Token
-                </Button>
-                <Tooltip open={showCopiedTooltip()}>
-                  <TooltipTrigger
-                    class="shrink-0"
-                    as={Button<"button">}
-                    variant="secondary"
-                    onMouseLeave={() => setOpenopiedTooltip(false)}
-                    onClick={() => {
-                      navigator.clipboard.writeText(field.value ?? "");
-                      setOpenopiedTooltip(true);
-                    }}
-                  >
-                    <IconCopy />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Copied!</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <Show when={!(field.active && field.error)}>
-                <TextFieldDescription>
-                  Required. Please enter a Base64 string which only includes
-                  A-B, a-b, 0-9, +, /, =. The token is required to call the
-                  generating file API to prevent your template from being
-                  abused. Please keep the token between 50 and 150 characters.
-                </TextFieldDescription>
-              </Show>
-              <TextFieldErrorMessage class="text-destructive">
-                {field.error}
-              </TextFieldErrorMessage>
+                  <IconCopy />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Copied!</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
-          </TextField>
+          </FieldSet>
         )}
       </Field>
       <Field name="apiToken.expiresAt" type="string">
-        {(field, props) => {
-          let inputEl: HTMLInputElement | undefined;
-          return (
-            <TextField
-              class="space-y-2 md:space-y-0 md:space-x-2 md:flex md:items-center"
-              validationState={
-                field.active && field.error ? "invalid" : "valid"
-              }
-            >
-              <TextFieldLabel class="md:shrink-0 md:w-32">
-                Expires At
-              </TextFieldLabel>
-              <div class="md:flex-grow md:space-y-2">
-                <div class="flex space-x-2">
-                  <TextFieldInput
-                    {...props}
-                    class="w-auto"
-                    type="datetime-local"
-                  />
-                </div>
-                <Show when={!(field.active && field.error)}>
-                  <TextFieldDescription>
-                    If you don't want the token to expire, leave it blank
-                  </TextFieldDescription>
-                </Show>
-                <TextFieldErrorMessage class="text-destructive">
-                  {field.error}
-                </TextFieldErrorMessage>
-              </div>
-            </TextField>
-          );
-        }}
+        {(field, props) => (
+          <FieldSet
+            label="Expires At"
+            description="If you don't want the token to expire, leave it blank."
+            invalid={Boolean(field.active && field.error)}
+            error={field.active ? field.error : undefined}
+          >
+            <TextFieldInput
+              {...props}
+              value={field.value}
+              class="w-auto"
+              type="datetime-local"
+            />
+          </FieldSet>
+        )}
       </Field>
       <Separator />
-
-      <Separator />
       <h3>Access-Control-Allow-Origin</h3>
+      <p>
+        Please enter a formatted origin that only includes protocol and domain
+        without path, ex: https://example.com
+      </p>
       <FieldArray name="accessControlAllowOrigin">
         {(fieldArray) => (
-          <TextField class="space-y-2 md:space-y-0 md:space-x-2 md:flex md:items-center">
-            <div class="md:flex-grow md:space-y-2">
-              {/* <TextFieldInput
-                {...props}
-                class="w-[50%]"
-                maxlength="100"
-                type="text"
-              />
-              <Show when={!(field.active && field.error)}>
-                <TextFieldDescription>
-                  Required. Please keep the name within 100 characters.
-                </TextFieldDescription>
-              </Show>
-              <TextFieldErrorMessage class="text-destructive">
-                {field.error}
-              </TextFieldErrorMessage> */}
-            </div>
-          </TextField>
+          <div class="flex flex-col gap-2 md:w-[50%]">
+            <For each={fieldArray.items}>
+              {(_, index) => (
+                <Field name={`accessControlAllowOrigin.${index()}`}>
+                  {(field, props) => (
+                    <FieldSet
+                      invalid={Boolean(field.active && field.error)}
+                      error={field.active ? field.error : undefined}
+                    >
+                      <div class="flex gap-2 justify-between">
+                        <TextFieldInput
+                          {...props}
+                          value={field.value}
+                          type="text"
+                          class="flex-auto"
+                        />
+                        <Button
+                          variant="ghost"
+                          class="text-destructive hover:text-destructive/90"
+                          onClick={() =>
+                            remove(settingsForm, "accessControlAllowOrigin", {
+                              at: index(),
+                            })
+                          }
+                        >
+                          <IconX />
+                        </Button>
+                      </div>
+                    </FieldSet>
+                  )}
+                </Field>
+              )}
+            </For>
+            <Button
+              variant="outline"
+              onClick={() =>
+                insert(settingsForm, "accessControlAllowOrigin", { value: "" })
+              }
+            >
+              +
+            </Button>
+          </div>
+        )}
+      </FieldArray>
+      <Separator />
+      <h3>Webhooks</h3>
+      <p>
+        Please enter a formatted url that includes protocol, domain and
+        path(optional), ex: https://example.com/path"
+      </p>
+      <FieldArray name="webhooks">
+        {(fieldArray) => (
+          <div class="flex flex-col gap-2 md:w-[50%]">
+            <For each={fieldArray.items}>
+              {(_, index) => (
+                <div class="space-y-2">
+                  <Field name={`webhooks.${index()}.type`}>
+                    {(field) => (
+                      <FieldSet
+                        label="Type"
+                        invalid={Boolean(field.active && field.error)}
+                        error={field.active ? field.error : undefined}
+                      >
+                        <div class="flex justify-between">
+                          <WebhookTypeSelect
+                            value={field.value}
+                            onChange={(value) =>
+                              setValue(settingsForm, field.name, value)
+                            }
+                          />
+                          <WebhookDeleteDialog
+                            as={Button<"button">}
+                            variant="destructive"
+                            onDelete={() =>
+                              remove(settingsForm, "webhooks", { at: index() })
+                            }
+                          >
+                            Delete
+                          </WebhookDeleteDialog>
+                        </div>
+                      </FieldSet>
+                    )}
+                  </Field>
+                  <Field name={`webhooks.${index()}.url`}>
+                    {(field, props) => (
+                      <FieldSet
+                        label="URL"
+                        invalid={Boolean(field.active && field.error)}
+                        error={field.active ? field.error : undefined}
+                      >
+                        <TextFieldInput
+                          {...props}
+                          value={field.value}
+                          type="text"
+                          class="flex-auto"
+                        />
+                      </FieldSet>
+                    )}
+                  </Field>
+                  <Field name={`webhooks.${index()}.retryLimit`} type="number">
+                    {(field, props) => (
+                      <FieldSet
+                        label="Retry Times"
+                        invalid={Boolean(field.active && field.error)}
+                        error={field.active ? field.error : undefined}
+                      >
+                        <TextFieldInput
+                          {...props}
+                          value={field.value}
+                          type="number"
+                          class="flex-auto"
+                          max="5"
+                          min="1"
+                        />
+                      </FieldSet>
+                    )}
+                  </Field>
+                  <Separator />
+                </div>
+              )}
+            </For>
+            <Button
+              variant="outline"
+              onClick={() =>
+                insert(settingsForm, "webhooks", {
+                  value: {
+                    type: WebhookType.FINISHED,
+                    url: "",
+                    retryLimit: 1,
+                    enabled: true,
+                  },
+                })
+              }
+            >
+              +
+            </Button>
+          </div>
         )}
       </FieldArray>
       <div>
-        <Button type="submit" disabled={templateForm.submitting}>
-          {templateForm.submitting && (
+        <Button type="submit" disabled={settingsForm.submitting}>
+          {settingsForm.submitting && (
             <IconLoader class="mr-2 size-4 animate-spin" />
           )}
           Submit
