@@ -7,9 +7,11 @@ import { createSettingsFormValuesResource } from "~/lib/api/createSettingsFormVa
 import { updateSettings } from "~/lib/api/settings";
 import { IconLoader } from "~/components/icons";
 import { Timestamp } from "firebase/firestore";
+import { auth } from "~/lib/firebase";
 
-export default function New() {
+export default function Settings() {
   const navigate = useNavigate();
+  const uid = auth.currentUser?.uid;
   const [settingsFormValues, _, error] = createSettingsFormValuesResource();
   createEffect(() => error() && navigate("/templates", { replace: true }));
   return (
@@ -27,7 +29,6 @@ export default function New() {
           }
         >
           <SettingsForm
-            class="test"
             defaultValue={settingsFormValues()}
             onSubmit={async (value) => {
               try {
@@ -59,6 +60,7 @@ export default function New() {
                 console.error(e);
               }
             }}
+            uid={uid ?? ""}
           />
         </Show>
       </div>

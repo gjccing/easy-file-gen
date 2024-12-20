@@ -118,6 +118,7 @@ export const getTemplateAndContentById = async (id: string) => {
 
 export const createNewTemplate = async ({
   content,
+  compiledContent,
   ...data
 }: {
   name: string;
@@ -126,10 +127,12 @@ export const createNewTemplate = async ({
   engine: SupportedEngine;
   enabled: boolean;
   content: File;
+  compiledContent?: File;
 }) => {
   await auth.authStateReady();
   const id = firestoreAutoId();
-  const contentStorageRef = `/users/${auth.currentUser?.uid}/${id}-${content.name}`;
+  const contentStorageRef = `users/${auth.currentUser?.uid}/${id}-${content.name}`;
+  const compiledContentStorageRef = `users/${auth.currentUser?.uid}/${id}-${compiledContent?.name}`;
   const template: Model.Template = {
     id,
     authorId: auth.currentUser?.uid ?? "",
@@ -139,6 +142,7 @@ export const createNewTemplate = async ({
     errorCount: 0,
     ...data,
     contentStorageRef,
+    ...(compiledContent ? { compiledContentStorageRef } : null),
     isDeleted: false,
   };
   return await Promise.all([
@@ -148,13 +152,19 @@ export const createNewTemplate = async ({
         contentType: content.type,
       })
     ),
+    compiledContent?.text().then((text) =>
+      uploadString(ref(storage, compiledContentStorageRef), text, "raw", {
+        contentType: compiledContent.type,
+      })
+    ),
   ]);
 };
 
 export const updateTemplate = async ({
   content,
+  compiledContent,
   ...template
-}: Model.Template & { content: File }) => {
+}: Model.Template & { content: File; compiledContent?: File }) => {
   await auth.authStateReady();
   template.editedAt = Timestamp.now();
   return await Promise.all([
@@ -163,6 +173,16 @@ export const updateTemplate = async ({
       uploadString(ref(storage, template.contentStorageRef), text, "raw", {
         contentType: content.type,
       })
+    ),
+    compiledContent?.text().then((text) =>
+      uploadString(
+        ref(storage, template.compiledContentStorageRef),
+        text,
+        "raw",
+        {
+          contentType: compiledContent.type,
+        }
+      )
     ),
   ]);
 };

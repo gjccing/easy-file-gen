@@ -39,6 +39,7 @@ const TemplateSchema = v.object({
   engine: v.enum(SupportedEngine, "Please pick a engine from the menu."),
   // contentStorageRef: v.string(),
   content: v.file(),
+  compiledContent: v.optional(v.file()),
 });
 
 export type TemplateFormValues = InferInput<typeof TemplateSchema>;
@@ -163,10 +164,23 @@ export function TemplateForm(props: {
                 class="h-[75svh]"
                 preset={engine()}
                 initialValue={field.value}
-                onChange={(file) => setValue(templateForm, field.name, file)}
+                onChange={(file, compiledFile) => {
+                  setValue(templateForm, field.name, file);
+                  setValue(templateForm, "compiledContent", compiledFile);
+                }}
               />
             )}
           </Show>
+        )}
+      </Field>
+      <Field name="compiledContent" type="File">
+        {(field, props) => (
+          <input
+            {...props}
+            id={field.name}
+            type="file"
+            style={{ display: "none" }}
+          />
         )}
       </Field>
       <div>

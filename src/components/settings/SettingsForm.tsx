@@ -1,11 +1,11 @@
 import { createSignal, For } from "solid-js";
-import type { SubmitHandler } from "@modular-forms/solid";
 import {
   createForm,
   valiForm,
   setValue,
   insert,
   remove,
+  getValue,
 } from "@modular-forms/solid";
 import { TextFieldInput } from "~/components/ui/text-field";
 import FieldSet from "~/components/FieldSet";
@@ -23,6 +23,7 @@ import {
 import { WebhookType } from "~/global.d";
 import WebhookTypeSelect from "./WebhookTypeSelect";
 import WebhookDeleteDialog from "./WebhookDeleteDialog";
+import jwtSign from "jwt-encode";
 
 function genRandAlphanumericStr(length: number): string {
   const charset =
@@ -60,7 +61,7 @@ const SettingsSchema = v.object({
         v.string(),
         v.nonEmpty("Please enter an allowed origin"),
         v.regex(
-          /^(http(s)?):\/\/(www\.)?[a-zA-Z0-9@%._\+~#=]{2,256}(:\d+)?$/,
+          /^(https):\/\/(www\.)?[a-zA-Z0-9@%._\+~#=]{2,256}(:\d+)?$/,
           "Please enter a formatted origin, such as https://example.com"
         )
       )
@@ -75,7 +76,7 @@ const SettingsSchema = v.object({
             v.string(),
             v.nonEmpty("Please enter an URL"),
             v.regex(
-              /^(http(s)?):\/\/(www\.)?[a-zA-Z0-9@%._\+~#=]{2,256}(:\d+)?(\/[-a-zA-Z0-9@%_\+.~#?&//=]*)?$/,
+              /^(https):\/\/(www\.)?[a-zA-Z0-9@%._\+~#=]{2,256}(:\d+)?(\/[-a-zA-Z0-9@%_\+.~#?&//=]*)?$/,
               "Please enter a formatted url, such as http://example.com/path"
             )
           ),
@@ -93,6 +94,7 @@ export default function SettingsForm(props: {
   class?: string | undefined;
   defaultValue?: SettingsFormValues;
   onSubmit: (value: SettingsFormValues) => void;
+  uid: string;
 }) {
   const [settingsForm, { Form, Field, FieldArray }] =
     createForm<SettingsFormValues>({
@@ -102,7 +104,15 @@ export default function SettingsForm(props: {
         webhooks: [],
       },
     });
-  const [showCopiedTooltip, setOpenopiedTooltip] = createSignal(false);
+  const apiToken = () => {
+    let payload: Partial<{ userId: string; expiresAt: number }> = {
+      userId: props.uid,
+    };
+    const expiresAt = getValue(settingsForm, "apiToken.expiresAt");
+    if (expiresAt) payload.expiresAt = new Date(expiresAt).getTime();
+    const token = getValue(settingsForm, "apiToken.token") ?? "";
+    return `Bearer ${token ? jwtSign(payload, token) : ""}`;
+  };
   return (
     <Form class={cn("grid gap-6", props.class)} onSubmit={props.onSubmit}>
       <Field name="apiToken.token" type="string">
@@ -134,23 +144,6 @@ export default function SettingsForm(props: {
               >
                 Generate Token
               </Button>
-              <Tooltip open={showCopiedTooltip()}>
-                <TooltipTrigger
-                  class="shrink-0"
-                  as={Button<"button">}
-                  variant="secondary"
-                  onMouseLeave={() => setOpenopiedTooltip(false)}
-                  onClick={() => {
-                    navigator.clipboard.writeText(field.value ?? "");
-                    setOpenopiedTooltip(true);
-                  }}
-                >
-                  <IconCopy />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Copied!</p>
-                </TooltipContent>
-              </Tooltip>
             </div>
           </FieldSet>
         )}
@@ -172,6 +165,32 @@ export default function SettingsForm(props: {
           </FieldSet>
         )}
       </Field>
+      <FieldSet
+        label="Authorization"
+        description="Please carry this header and its value with your file-generating request"
+      >
+        <div class="flex space-x-2">
+          <TextFieldInput
+            class="w-full"
+            type="text"
+            disabled
+            value={apiToken()}
+          />
+          <Tooltip>
+            <TooltipTrigger
+              class="shrink-0"
+              as={Button<"button">}
+              variant="secondary"
+              onClick={() => navigator.clipboard.writeText(apiToken() ?? "")}
+            >
+              <IconCopy />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Copied!</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </FieldSet>
       <Separator />
       <h3>Access-Control-Allow-Origin</h3>
       <p>
@@ -309,7 +328,6 @@ export default function SettingsForm(props: {
                     type: WebhookType.FINISHED,
                     url: "",
                     retryLimit: 1,
-                    enabled: true,
                   },
                 })
               }

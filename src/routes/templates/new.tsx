@@ -13,7 +13,6 @@ export default function New() {
       </div>
       <div class="flex flex-col gap-4 relative">
         <TemplateForm
-          class="test"
           onSubmit={async (data) => {
             try {
               await createNewTemplate(data);

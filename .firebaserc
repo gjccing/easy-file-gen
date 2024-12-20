@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "easy-file-gen"
+  },
+  "targets": {},
+  "etags": {
+    "easy-file-gen": {
+      "extensionInstances": {}
+    }
+  },
+  "dataconnectEmulatorConfig": {}
+}

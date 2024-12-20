@@ -1,4 +1,5 @@
 import * as monaco from "monaco-editor"; // client only
+import * as ts from "typescript";
 
 export default (): EDITOR_PRESET => {
   let typescriptDefaultsCompilerOptions: monaco.languages.typescript.CompilerOptions =
@@ -22,7 +23,7 @@ export default (): EDITOR_PRESET => {
       automaticLayout: true,
       scrollBeyondLastLine: false,
     }),
-    onAfterCreatedEditor: async (editor) => {
+    onAfterCreatedEditor: async () => {
       typescriptDefaultsCompilerOptions =
         monaco.languages.typescript.typescriptDefaults.getCompilerOptions();
       monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
@@ -47,6 +48,18 @@ export default (): EDITOR_PRESET => {
       );
       monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions(
         typescriptDefaultsDiagnosticsOptions
+      );
+    },
+    preprocessBeforeChange: async (value) => {
+      const result = ts.transpileModule(await value.text(), {
+        compilerOptions: { jsx: 2, target: 1 },
+      });
+      return new File(
+        [result.outputText],
+        value.name.replace(/\.tsx?/, ".js"),
+        {
+          type: `text/javascript`,
+        }
       );
     },
   };

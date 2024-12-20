@@ -34,7 +34,6 @@ export default function Edit() {
         </div>
         <div class="flex flex-col gap-4 relative">
           <TemplateForm
-            class="test"
             defaultValue={templateFormValues()}
             onSubmit={async (data) => {
               try {

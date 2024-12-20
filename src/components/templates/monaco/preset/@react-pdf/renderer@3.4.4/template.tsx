@@ -1,6 +1,6 @@
 import React from "react"; // v18
 import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer"; // v3.4.4
-
+import lodash from "lodash";
 const MyDocument = (data: any /* your input */) => {
   const styles = StyleSheet.create({
     page: {

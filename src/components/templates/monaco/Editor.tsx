@@ -8,23 +8,21 @@ export default function (props: {
   class?: string;
   preset: SupportedEngine;
   initialValue?: File;
-  onChange?: (value: File) => void;
+  onChange?: (value: File, compiledValue?: File) => void;
 }) {
   let container: HTMLDivElement | undefined;
   let preset: EDITOR_PRESET | undefined;
   let editor: monaco.editor.IStandaloneCodeEditor | undefined;
   let initialModel: monaco.editor.ITextModel | undefined;
-  const handleChange = () => {
-    if (editor && props.onChange)
-      props.onChange(
-        new File(
-          [editor.getValue()],
-          (editor.getModel()?.uri.toString() ?? "").replace(/^.*\//, ""),
-          {
-            type: `text/${editor.getModel()?.getLanguageId() ?? "plain"}`,
-          }
-        )
+  const handleChange = async () => {
+    if (editor && props.onChange) {
+      let value = new File(
+        [editor.getValue()],
+        (editor.getModel()?.uri.toString() ?? "").replace(/^.*\//, ""),
+        { type: `text/${editor.getModel()?.getLanguageId() ?? "plain"}` }
       );
+      props.onChange(value, await preset?.preprocessBeforeChange?.(value));
+    }
   };
   const disposeEditor = () => {
     if (editor && preset) {

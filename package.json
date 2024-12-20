@@ -5,7 +5,9 @@
     "dev": "vinxi dev",
     "build": "vinxi build",
     "start": "vinxi start",
-    "set-cors": "gsutil cors set cors.json gs://easy-file-gen.appspot.com"
+    "set-cors": "gsutil cors set cors.json gs://easy-file-gen.appspot.com",
+    "fire-import": "fire-import storage && fire-import firestore",
+    "deploy:function": "firebase deploy --only functions"
   },
   "dependencies": {
     "@corvu/resizable": "^0.2.3",
@@ -19,6 +21,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "firebase": "^10.12.4",
+    "jwt-encode": "^1.0.1",
     "lodash": "^4.17.21",
     "monaco-editor": "^0.51.0",
     "postcss": "^8.4.38",
@@ -26,10 +29,17 @@
     "tailwind-merge": "^2.4.0",
     "tailwindcss": "^3.4.7",
     "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.7.2",
     "valibot": "^0.42.1",
     "vinxi": "^0.4.1"
   },
   "engines": {
     "node": ">=20.11.1"
+  },
+  "devDependencies": {
+    "@google-cloud/pubsub": "^4.9.0",
+    "@types/jwt-encode": "^1.0.3",
+    "fire-import": "^1.1.11",
+    "tsx": "^4.19.2"
   }
 }

@@ -34,12 +34,13 @@ declare global {
     onAfterDisposedEditor?: (
       editor: monaco.editor.IStandaloneCodeEditor
     ) => void;
+    preprocessBeforeChange?: (value: File) => Promise<File>;
   }
 
   namespace Model {
     // Webhook interface
     interface Webhook {
-      type: WebhookType;
+      type: "FINISHED" | "ERROR";
       url: string;
       retryLimit: number;
     }
@@ -69,6 +70,7 @@ declare global {
       description: string;
       engine: SupportedEngine;
       contentStorageRef: string; // <= 10kb
+      compiledContentStorageRef?: string;
       isDeleted: boolean;
     }
 
@@ -80,75 +82,71 @@ declare global {
      * The notifying action will be created, only if the user has set webhooks
      * It will be created by the finished and error event listeners.
      */
-    interface GenFileRecord {
+    interface Record<
+      T extends
+        | CallingFinishedContent
+        | GeneratingFinishedContent
+        | NotifingFinishedContent
+        | Error
+    > {
       id: string;
+      sessionId: string;
       createdAt: Timestamp;
+      editedAt: Timestamp;
       refUserId: string;
-      templateRef: string;
-      recordRef?: GenFileRecord;
-      action: "calling" | "finished" | "error" | "notifying";
-      payload:
-        | CallingPayload
-        | FinishedPayload
-        | ErrorPayload
-        | NotifingPayload;
+      templateId: string;
+      action: "call" | "generate" | "notify";
+      state: "processing" | "finished" | "error";
+      content: T;
     }
 
     // Payload interfaces
-    interface CallingPayload {
+    interface CallingFinishedContent {
       callingUrl: string; // /template-id/filename?
-      witnApiToken: string;
-      templateId: string;
       filename: string;
+      engine: SupportedEngine;
       dataStorageRef: string;
+      templateStorageRef: string;
       outputStorageRef: string;
     }
 
-    interface FinishedPayload {
+    interface GeneratingFinishedContent {
       filename: string;
-      outputStorageRef: string;
+      publicOutputFileUrl: string;
       isDeleted: boolean;
     }
 
-    interface ErrorPayload {
-      sourceUrl: string; // /template-id/version-id or customTag/filename?
-      errorType:
-        | AuthorizationError
-        | ResourceNotFoundError
-        | ResourceDisabledError
-        | TemplateProcessingError
-        | WebhookError
-        | InternalServerError
-        | QuotaExceededError;
+    interface NotifingFinishedContent {
+      url: string;
+      reason: "finished" | "error";
+      payload: GeneratingFinishedContent | Error;
     }
 
-    // The api is because of trigger this service with s wrong apitoken
-    interface AuthorizationError {
-      type: "AuthorizationError";
-      code: 401;
-      message: string;
-    }
-
-    // The template or version that users ask for does not exist.
-    interface ResourceNotFoundError {
-      type: "ResourceNotFoundError";
-      code: 404;
-      message: string;
-    }
+    type Error =
+      | ResourceDisabledError
+      | DataFormatError
+      | TemplateProcessingError
+      | WebhookError
+      | InternalServerError;
 
     // The template or version that users ask for is disabled.
     interface ResourceDisabledError {
       type: "ResourceDisabledError";
-      code: 403;
       message: string;
+      code: 403;
+    }
+
+    interface DataFormatError {
+      type: "DataFormatError";
+      message: string;
+      code: 400;
     }
 
     // The error happens during generating files
     interface TemplateProcessingError {
       type: "TemplateProcessingError";
       code: 500;
-      message: string;
-      errorLogRef: string;
+      stack: string;
     }
 
     // The error happens during processing webhook including getting a bad response, timeout, etc.
@@ -156,7 +154,8 @@ declare global {
       type: "WebhookError";
       code: 502;
       message: string;
-      errorLogRef: string;
+      url: string;
+      payload?: string;
     }
 
     // Including all undefined error, help me to fix my bugs.
@@ -164,24 +163,6 @@ declare global {
       type: "InternalServerError";
       code: -1;
       message: string;
-      errorLogRef: string;
-      resolved: boolean; // Make users know this problem is solved.
-    }
-
-    // Users have used over their quota, but I am not sure, I wanna bill it by pay-as-you-go
-    interface QuotaExceededError {
-      type: "QuotaExceededError";
-      code: 429;
-      message: string;
-      budget: number;
-      exceededAmount: number;
-    }
-
-    interface NotifingPayload {
-      url: string;
-      headers: { key: string; value: string };
-      reason: "finished" | "error";
-      content: FinishedPayload | ErrorPayload;
     }
   }
 }
