@@ -61,7 +61,7 @@ const SettingsSchema = v.object({
         v.string(),
         v.nonEmpty("Please enter an allowed origin"),
         v.regex(
-          /^(https):\/\/(www\.)?[a-zA-Z0-9@%._\+~#=]{2,256}(:\d+)?$/,
+          /^(https):\/\/(www\.)?[-a-zA-Z0-9@%._\+~#=]{2,256}(:\d+)?$/,
           "Please enter a formatted origin, such as https://example.com"
         )
       )
@@ -76,7 +76,7 @@ const SettingsSchema = v.object({
             v.string(),
             v.nonEmpty("Please enter an URL"),
             v.regex(
-              /^(https):\/\/(www\.)?[a-zA-Z0-9@%._\+~#=]{2,256}(:\d+)?(\/[-a-zA-Z0-9@%_\+.~#?&//=]*)?$/,
+              /^(https):\/\/(www\.)?[-a-zA-Z0-9@%._\+~#=]{2,256}(:\d+)?(\/[-a-zA-Z0-9@%_\+.~#?&//=]*)?$/,
               "Please enter a formatted url, such as http://example.com/path"
             )
           ),
