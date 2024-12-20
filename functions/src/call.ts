@@ -13,6 +13,7 @@ import {
 import { addRecord, updateRecord } from "./db";
 import { Readable, PassThrough } from "stream";
 import { parser } from "stream-json";
+import { getDownloadURL } from "firebase-admin/storage";
 
 const db = admin.firestore();
 const bucket = admin.storage().bucket();
@@ -146,7 +147,7 @@ export const call = onRequest(async (request, response) => {
     });
     response.send({
       sessionId,
-      outputFileURL: file.publicUrl(),
+      outputFileURL: await getDownloadURL(file),
       state: "processing",
     });
   } catch (e) {
@@ -213,7 +214,9 @@ export const state = onRequest(async (request, response) => {
           hasError: records.some((rec) => rec.state === "error"),
           outputFileURL:
             callingRecord.state !== "error"
-              ? bucket.file(callingRecord.content.outputStorageRef).publicUrl()
+              ? await getDownloadURL(
+                  bucket.file(callingRecord.content.outputStorageRef)
+                )
               : "",
           records,
         })

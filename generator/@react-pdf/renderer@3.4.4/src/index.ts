@@ -7,6 +7,7 @@ import vm, { Context } from "vm";
 import * as react from "react";
 import * as renderer from "@react-pdf/renderer";
 import * as lodash from "lodash";
+import { getDownloadURL } from "firebase-admin/storage";
 
 if (admin.apps.length === 0) admin.initializeApp();
 
@@ -52,6 +53,27 @@ const fetchTemplateCode = async (path: string): Promise<string> => {
   } else return (await templateFile.download()).toString();
 };
 
+function responseResult(id: string, state: "finished" | "error", result: any) {
+  pubsub.topic("generating-result-topic").publishMessage({
+    data: Buffer.from(
+      JSON.stringify(
+        state === "error"
+          ? {
+              state: "error",
+              recordId: id,
+              code: result.code ?? -1,
+              error: result.error,
+            }
+          : {
+              state: "finished",
+              recordId: id,
+              result,
+            }
+      )
+    ),
+  });
+}
+
 export const react_pdf_renderer_3_4_4 = onMessagePublished(
   "react_pdf_renderer_3_4_4",
   async (event) => {
@@ -77,16 +99,7 @@ export const react_pdf_renderer_3_4_4 = onMessagePublished(
             "node:vm",
             content.templateStorageRef.replace(/.*\//, "")
           ) ?? error.toString();
-        pubsub.topic("generating-result-topic").publishMessage({
-          data: Buffer.from(
-            JSON.stringify({
-              state: "error",
-              recordId: record.id,
-              code: 500,
-              error,
-            })
-          ),
-        });
+        responseResult(record.id, "error", { code: 500, error });
         return;
       }
 
@@ -97,32 +110,18 @@ export const react_pdf_renderer_3_4_4 = onMessagePublished(
       await new Promise((res, rej) =>
         stream.pipe(outputWS).on("finish", res).on("error", rej)
       );
-      pubsub.topic("generating-result-topic").publishMessage({
-        data: Buffer.from(
-          JSON.stringify({
-            state: "finished",
-            recordId: record.id,
-            result: {
-              filename: content.filename,
-              publicOutputFileUrl: bucket
-                .file(content.outputStorageRef)
-                .publicUrl(),
-              isDeleted: false,
-            },
-          })
+      responseResult(record.id, "finished", {
+        filename: content.filename,
+        publicOutputFileUrl: await getDownloadURL(
+          bucket.file(content.outputStorageRef)
         ),
+        isDeleted: false,
       });
     } catch (error: any) {
       logger.error("InternalServerError", error);
-      pubsub.topic("generating-result-topic").publishMessage({
-        data: Buffer.from(
-          JSON.stringify({
-            state: "error",
-            recordId: record.id,
-            code: -1,
-            error: error.stack ?? error.toString(),
-          })
-        ),
+      responseResult(record.id, "error", {
+        code: -1,
+        error: error.stack ?? error.toString(),
       });
     }
   }
