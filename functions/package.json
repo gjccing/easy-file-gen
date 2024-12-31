@@ -18,8 +18,11 @@
     "@google-cloud/pubsub": "^4.9.0",
     "@types/jsonwebtoken": "^9.0.7",
     "busboy": "^1.6.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
     "firebase-admin": "^12.1.0",
     "firebase-functions": "^5.0.0",
+    "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "stream-json": "^1.9.1",
     "uuid": "^11.0.3"

@@ -82,6 +82,7 @@ declare global {
      * The notifying action will be created, only if the user has set webhooks
      * It will be created by the finished and error event listeners.
      */
+
     interface Record<
       T extends
         | CallingFinishedContent

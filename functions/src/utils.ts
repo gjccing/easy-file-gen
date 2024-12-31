@@ -1,20 +1,23 @@
 import type { OutputType, SupportedEngine } from "../../src/global";
+import { RequestHandler } from "express";
 
 export const ErrorConstructor = {
-  "403": (source: Error): Model.ResourceDisabledError => ({
-    type: "ResourceDisabledError",
-    code: 403,
-    message: source.toString(),
-  }),
-  "400": (source: Error): Model.DataFormatError => ({
+  "400": (source?: Error): Model.DataFormatError => ({
     type: "DataFormatError",
     code: 400,
-    message: source.toString(),
+    message: source?.toString() ?? "",
   }),
-  "500": (source: Error): Model.TemplateProcessingError => ({
+  "401": () => {},
+  "403": (): Model.ResourceDisabledError => ({
+    type: "ResourceDisabledError",
+    code: 403,
+    message: ErrorMessage["403"],
+  }),
+  "404": () => {},
+  "500": (source?: Error): Model.TemplateProcessingError => ({
     type: "TemplateProcessingError",
     code: 500,
-    stack: source.toString(),
+    stack: source?.toString() ?? "",
   }),
   "502": (source: Error, url: string): Model.WebhookError => ({
     type: "WebhookError",
@@ -30,8 +33,10 @@ export const ErrorConstructor = {
 };
 
 export const ErrorMessage = {
-  "403": "The target template is disabled.",
   "400": "The uploaded data format is unsupported, expected the JSON format.",
+  "401": "User authentication failed.",
+  "403": "The target template is disabled.",
+  "404": "The template does not exist.",
   "500": "",
   "502": "",
   "-1": "Internal Server Error: An unexpected issue occurred on our server. Please contact us for assistance if the problem persists. We apologize for the inconvenience.",
@@ -52,3 +57,13 @@ export const getTopicByEngine = (engine: SupportedEngine) => {
   }
   return "";
 };
+
+export const middlewareWrapper =
+  (cb: RequestHandler): RequestHandler =>
+  async (req, res, next) => {
+    try {
+      await cb(req, res, next);
+    } catch (e) {
+      next(e);
+    }
+  };
