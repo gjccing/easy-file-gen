@@ -21,10 +21,16 @@ import {
   Timestamp,
   limitToLast,
 } from "firebase/firestore";
-import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import {
+  ref,
+  uploadString,
+  getDownloadURL,
+  getMetadata,
+} from "firebase/storage";
 import { auth, db, storage } from "~/lib/firebase";
 import { firestoreAutoId } from "~/lib/utils";
 import { OutputType, SupportedEngine } from "~/global.d";
+import md5 from "md5";
 
 async function buildTemplateListQuery(): Promise<
   [CollectionReference<DocumentData, DocumentData>, ...QueryConstraint[]]
@@ -103,7 +109,7 @@ export const getTemplateAndContentById = async (id: string) => {
     id: templateDoc.id,
   } as Model.Template;
   const fileName =
-    template.contentStorageRef.match(/(?<=\/\w+-)[^/]+?$/)?.[0] ?? "";
+    template.contentStorageRef.match(/(?<=.+)(?<=\/)([\.\w]+)$/)?.[0] ?? "";
   const response = await fetch(
     await getDownloadURL(ref(storage, template.contentStorageRef))
   );
@@ -115,6 +121,15 @@ export const getTemplateAndContentById = async (id: string) => {
   ];
   return result;
 };
+
+async function replaceFileNameWithMD5(file?: File) {
+  if (file) {
+    const md5hash = await file.text().then(md5);
+    const contentExtFileName = file.name.match(/\.(\w+)$/)?.[1] ?? "";
+    return `${md5hash}.${contentExtFileName}`;
+  }
+  return "";
+}
 
 export const createNewTemplate = async ({
   content,
@@ -131,8 +146,13 @@ export const createNewTemplate = async ({
 }) => {
   await auth.authStateReady();
   const id = firestoreAutoId();
-  const contentStorageRef = `users/${auth.currentUser?.uid}/${id}-${content.name}`;
-  const compiledContentStorageRef = `users/${auth.currentUser?.uid}/${id}-${compiledContent?.name}`;
+  const contentStorageRef = `users/${
+    auth.currentUser?.uid
+  }/${id}/${await replaceFileNameWithMD5(content)}`;
+  const compiledContentStorageRef = `users/${
+    auth.currentUser?.uid
+  }/${id}/${await replaceFileNameWithMD5(compiledContent)}`;
+
   const template: Model.Template = {
     id,
     authorId: auth.currentUser?.uid ?? "",
@@ -167,23 +187,31 @@ export const updateTemplate = async ({
 }: Model.Template & { content: File; compiledContent?: File }) => {
   await auth.authStateReady();
   template.editedAt = Timestamp.now();
+  const contentStorageRef = `users/${auth.currentUser?.uid}/${
+    template.id
+  }/${await replaceFileNameWithMD5(content)}`;
+  const compiledContentStorageRef = `users/${auth.currentUser?.uid}/${
+    template.id
+  }/${await replaceFileNameWithMD5(compiledContent)}`;
+
   return await Promise.all([
-    setDoc(doc(db, "templates", template.id), template),
-    content.text().then((text) =>
-      uploadString(ref(storage, template.contentStorageRef), text, "raw", {
-        contentType: content.type,
-      })
-    ),
-    compiledContent?.text().then((text) =>
-      uploadString(
-        ref(storage, template.compiledContentStorageRef),
-        text,
-        "raw",
-        {
+    setDoc(doc(db, "templates", template.id), {
+      ...template,
+      contentStorageRef,
+      ...(compiledContent ? { compiledContentStorageRef } : null),
+    }),
+    template.contentStorageRef !== contentStorageRef &&
+      content.text().then((text) =>
+        uploadString(ref(storage, contentStorageRef), text, "raw", {
+          contentType: content.type,
+        })
+      ),
+    template.compiledContentStorageRef !== compiledContentStorageRef &&
+      compiledContent?.text().then((text) =>
+        uploadString(ref(storage, compiledContentStorageRef), text, "raw", {
           contentType: compiledContent.type,
-        }
-      )
-    ),
+        })
+      ),
   ]);
 };
 

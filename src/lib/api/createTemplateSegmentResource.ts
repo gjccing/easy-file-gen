@@ -29,7 +29,7 @@ export function createTemplateSegmentResource(props: {
     undefined,
   ]);
 
-  const load = async (ref: SegmentRef, forceUpdate?: boolean) => {
+  const load = async (ref: SegmentRef) => {
     setIsLoading(true);
     try {
       const result = await (ref[0]
@@ -46,10 +46,8 @@ export function createTemplateSegmentResource(props: {
         );
       }
 
-      if (result.length > 0 || forceUpdate) {
-        setSegment(result);
-        setSegmentRef(ref);
-      }
+      setSegment(result);
+      setSegmentRef(ref);
       if (result.length === 0)
         showToast({ title: "No more data found.", variant: "warning" });
     } catch (e) {

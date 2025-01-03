@@ -59,7 +59,7 @@ export default function Templates() {
   } = createTemplateSegmentResource({ initialSegmentRef: initialRef });
   onMount(async () => {
     await reload();
-    if (ref()[0] && segment().length === 0) await load([, "after"], true);
+    if (ref()[0] && segment().length === 0) await load([, "after"]);
   });
   createEffect(() => {
     const currentRef = ref();
