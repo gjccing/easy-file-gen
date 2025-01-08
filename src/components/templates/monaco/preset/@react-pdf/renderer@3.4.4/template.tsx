@@ -9,7 +9,7 @@ import {
 } from "@react-pdf/renderer"; // v3.4.4
 import _ from "lodash";
 
-export default (data: any /* your input */) => {
+const MyDocument = (props: { data: any }) => {
   const styles = StyleSheet.create({
     page: {
       flexDirection: "row",
@@ -22,12 +22,12 @@ export default (data: any /* your input */) => {
     },
   });
 
-  return renderToStream(
+  return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.section}>
           <Text>Section #1</Text>
-          <Text>{_.upperFirst(data.name)}</Text>
+          <Text>{_.upperFirst(props.data.name)}</Text>
         </View>
         <View style={styles.section}>
           <Text>Section #2</Text>
@@ -35,4 +35,9 @@ export default (data: any /* your input */) => {
       </Page>
     </Document>
   );
+};
+
+// The function will be imported and used. Please keep this function or export the same type of function.
+export default (data: any /* your input */): Promise<NodeJS.ReadableStream> => {
+  return renderToStream(<MyDocument data={data} />);
 };
