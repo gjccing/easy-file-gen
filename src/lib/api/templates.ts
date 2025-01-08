@@ -158,8 +158,6 @@ export const createNewTemplate = async ({
     authorId: auth.currentUser?.uid ?? "",
     createdAt: Timestamp.now(),
     editedAt: Timestamp.now(),
-    callingCount: 0,
-    errorCount: 0,
     ...data,
     contentStorageRef,
     ...(compiledContent ? { compiledContentStorageRef } : null),

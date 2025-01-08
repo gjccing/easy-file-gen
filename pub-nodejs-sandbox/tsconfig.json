@@ -12,7 +12,7 @@
   },
   "compileOnSave": true,
   "include": [
-    "src",
-    "../../../src/global.d.ts"
+    "./src",
+    "../src/global.d.ts"
   ]
 }

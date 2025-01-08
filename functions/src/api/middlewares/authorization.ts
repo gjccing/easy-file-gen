@@ -1,9 +1,8 @@
 import type { RequestHandler } from "express";
 import { verify } from "jsonwebtoken";
-import * as admin from "firebase-admin";
-import { ErrorMessage } from "../../utils";
+import GeneralRepository from "~/store/GeneralRepository";
 
-const db = admin.firestore();
+const repository = new GeneralRepository<Model.Settings>("settings");
 
 const authorization: RequestHandler = async (req, res, next) => {
   const token = req.header("Authorization");
@@ -13,16 +12,14 @@ const authorization: RequestHandler = async (req, res, next) => {
         Buffer.from(token.split(".")[1], "base64").toString()
       );
       if (payload.expiresAt && payload.expiresAt >= Date.now()) return;
-      const doc = await db.collection("settings").doc(payload.userId).get();
-      if (!doc.exists) return;
-      verify(token.slice(7), doc.get("apiToken.token"));
+      const settings = await repository.fetchById(payload.userId);
+      if (!settings) return;
+      verify(token.slice(7), settings.apiToken.token);
       req.userId = payload.userId;
       next();
     }
   } catch (e) {
-    res
-      .status(401)
-      .send({ sessionId: req.sessionId, error: ErrorMessage["401"] });
+    next(401);
   }
 };
 

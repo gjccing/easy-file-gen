@@ -1,7 +1,15 @@
 import React from "react"; // v18
-import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer"; // v3.4.4
-import lodash from "lodash";
-const MyDocument = (data: any /* your input */) => {
+import {
+  Page,
+  Text,
+  View,
+  Document,
+  StyleSheet,
+  renderToStream,
+} from "@react-pdf/renderer"; // v3.4.4
+import _ from "lodash";
+
+export default (data: any /* your input */) => {
   const styles = StyleSheet.create({
     page: {
       flexDirection: "row",
@@ -14,11 +22,12 @@ const MyDocument = (data: any /* your input */) => {
     },
   });
 
-  return (
+  return renderToStream(
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.section}>
           <Text>Section #1</Text>
+          <Text>{_.upperFirst(data.name)}</Text>
         </View>
         <View style={styles.section}>
           <Text>Section #2</Text>
@@ -27,7 +36,3 @@ const MyDocument = (data: any /* your input */) => {
     </Document>
   );
 };
-
-export default MyDocument;
-// The default export target of the template will be imported and used.
-// Please make sure the file has a default export.

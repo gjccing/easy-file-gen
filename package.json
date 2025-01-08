@@ -21,6 +21,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "firebase": "^10.12.4",
+    "firebase-admin": "^13.0.2",
     "jwt-encode": "^1.0.1",
     "lodash": "^4.17.21",
     "md5": "^2.3.0",

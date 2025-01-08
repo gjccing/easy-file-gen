@@ -1,17 +1,14 @@
 import type { Request } from "express";
 import cors from "cors";
-import * as admin from "firebase-admin";
+import GeneralRepository from "~/store/GeneralRepository";
 
-const db = admin.firestore();
+const repository = new GeneralRepository<Model.Settings>("settings");
 
 export default cors(async (req: Request, callback) => {
   try {
-    const doc = await db
-      .collection("settings")
-      .doc(req.userId ?? "")
-      .get();
+    const settings = await repository.fetchById(req.userId ?? "");
     callback(null, {
-      origin: doc.get("accessControlAllowOrigin") ?? [],
+      origin: settings?.accessControlAllowOrigin ?? [],
     });
   } catch (e: any) {
     callback(e);

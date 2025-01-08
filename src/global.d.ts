@@ -74,96 +74,102 @@ declare global {
       isDeleted: boolean;
     }
 
-    /**
-     * GenFileRecords interface
-     * This record only records the file generation process.
-     * Except for the calling and notifying action, others will be automatically added by firestore events.
-     * The calling action will be created when the trigger api is called.
-     * The notifying action will be created, only if the user has set webhooks
-     * It will be created by the finished and error event listeners.
-     */
-
-    interface Record<
-      T extends
-        | CallingFinishedContent
-        | GeneratingFinishedContent
-        | NotifingFinishedContent
-        | Error
-    > {
+    interface Task {
       id: string;
-      sessionId: string;
       createdAt: Timestamp;
       editedAt: Timestamp;
-      refUserId: string;
+      userId: string;
       templateId: string;
-      action: "call" | "generate" | "notify";
-      state: "processing" | "finished" | "error";
-      content: T;
+      state: "PREPARING" | "GENERATING" | "FINISHED" | "ERROR";
+      downloadURL?: string;
+      events: Event[];
     }
 
-    // Payload interfaces
-    interface CallingFinishedContent {
-      callingUrl: string; // /template-id/filename?
-      filename: string;
+    type Event =
+      | PreparationEndedEvent
+      | DataMissingError
+      | SendRendererEndedEvent
+      | DataSyntaxError
+      | TemplateExecutionError
+      | GenerationEndedEvent
+      | WebhookEndedEvent
+      | InternalServerError
+      | ExecutionTimeoutError;
+
+    interface PreparationEndedEvent {
+      taskId: string;
+      createdAt: Timestamp;
+      name: "PreparationEndedEvent";
+      userId: string;
+      filename?: string;
+      inputStorageRef: string;
       engine: SupportedEngine;
-      dataStorageRef: string;
       templateStorageRef: string;
-      outputStorageRef: string;
     }
 
-    interface GeneratingFinishedContent {
-      filename: string;
-      publicOutputFileUrl: string;
+    interface DataMissingError {
+      taskId: string;
+      createdAt: Timestamp;
+      name: "DataMissingError";
+      message: "Required data is missing.";
+      missingTarget: "PreparationEndedEvent" | "templateStorageRef";
+    }
+
+    interface SendRendererEndedEvent {
+      taskId: string;
+      createdAt: Timestamp;
+      name: "SendRendererEndedEvent";
+      messageId: string;
+    }
+
+    interface DataSyntaxError {
+      taskId: string;
+      createdAt: Timestamp;
+      name: "DataSyntaxError";
+      message: "Syntax error in uploading data. The data does not conform to JSON format.";
+    }
+
+    interface TemplateExecutionError {
+      taskId: string;
+      createdAt: Timestamp;
+      name: "TemplateExecutionError";
+      message: "Error occurred while executing the template.";
+      error: string;
+    }
+
+    interface GenerationEndedEvent {
+      taskId: string;
+      createdAt: Timestamp;
+      name: "GenerationEndedEvent";
+      outputStorageRef: string;
       isDeleted: boolean;
     }
 
-    interface NotifingFinishedContent {
+    interface WebhookEndedEvent {
+      taskId: string;
+      createdAt: Timestamp;
+      name: "WebhookEndedEvent";
+      type: "FINISHED" | "ERROR";
       url: string;
-      reason: "finished" | "error";
-      payload: GeneratingFinishedContent | Error;
+      response: {
+        status: string;
+        headers: string;
+        body: string;
+      };
     }
 
-    type Error =
-      | ResourceDisabledError
-      | DataFormatError
-      | TemplateProcessingError
-      | WebhookError
-      | InternalServerError;
-
-    // The template or version that users ask for is disabled.
-    interface ResourceDisabledError {
-      type: "ResourceDisabledError";
-      message: string;
-      code: 403;
-    }
-
-    interface DataFormatError {
-      type: "DataFormatError";
-      message: string;
-      code: 400;
-    }
-
-    // The error happens during generating files
-    interface TemplateProcessingError {
-      type: "TemplateProcessingError";
-      code: 500;
-      stack: string;
-    }
-
-    // The error happens during processing webhook including getting a bad response, timeout, etc.
-    interface WebhookError {
-      type: "WebhookError";
-      code: 502;
-      message: string;
-      url: string;
-      payload?: string;
-    }
-
-    // Including all undefined error, help me to fix my bugs.
     interface InternalServerError {
-      type: "InternalServerError";
-      code: -1;
-      message: string;
+      taskId: string;
+      createdAt: Timestamp;
+      name: "InternalServerError";
+      message: "An unexpected issue occurred on our server. Please contact us for fixing the problem. We apologize for the inconvenience.";
+    }
+
+    interface ExecutionTimeoutError {
+      taskId: string;
+      createdAt: Timestamp;
+      name: "ExecutionTimeoutError";
+      message: "The execution of this task has timed out, please check your template and uploaded data or retry.";
     }
   }
 }
