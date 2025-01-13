@@ -86,7 +86,7 @@ export const createGenerationEndedEvent = (
 ): Model.GenerationEndedEvent => {
   let filename = refEvent.filename ?? `${firestoreAutoId()}.pdf`;
   if (!filename.endsWith(".pdf")) filename = `${filename}.pdf`;
-  const outputStorageRef = `ouptput/${refEvent.userId}/${refEvent.taskId}/${filename}`;
+  const outputStorageRef = `output/${refEvent.userId}/${refEvent.taskId}/${filename}`;
   return {
     taskId: refEvent.taskId,
     createdAt: Timestamp.now() as Model.GenerationEndedEvent["createdAt"],
