@@ -7,6 +7,8 @@ import {
   createInternalServerError,
   createWebhookEndedEvent,
   createExecutionTimeoutError,
+  createGenerationMessage,
+  convertMessageToEvent,
 } from "~/utils";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
 import GeneralRepository from "~/store/GeneralRepository";
@@ -21,11 +23,11 @@ export async function sendGeneratingMessage(task: Model.Task) {
   const events: Model.Event[] = task.events;
   const event = events.find(({ name }) => name === "PreparationEndedEvent");
   if (event) {
-    const PreparationEndedEvent = event as Model.PreparationEndedEvent;
+    const pEvent = event as Model.PreparationEndedEvent;
     const messageId = await pubsub
-      .topic(getTopicByEngine(PreparationEndedEvent.engine))
+      .topic(getTopicByEngine(pEvent.engine))
       .publishMessage({
-        data: Buffer.from(JSON.stringify(PreparationEndedEvent)),
+        data: Buffer.from(JSON.stringify(createGenerationMessage(pEvent))),
       });
     await taskRepository.logEvent(
       task.id,
@@ -33,28 +35,25 @@ export async function sendGeneratingMessage(task: Model.Task) {
     );
     return;
   } else {
-    await taskRepository.logEvent(
-      task.id,
-      createDataMissingError(task.id, "PreparationEndedEvent")
-    );
+    await taskRepository.logEvent(task.id, createDataMissingError(task.id));
     return 422;
   }
 }
 
-export const generatingResultPub = onMessagePublished(
-  "generating-end-pub",
+export const generatingResultSub = onMessagePublished(
+  "generation-ended-pubsub",
   async (event) => {
     let taskId: string | undefined;
     try {
-      const data = JSON.parse(
+      const message = JSON.parse(
         Buffer.from(event.data.message.data, "base64").toString()
-      ) as Model.Event;
-      taskId = data.taskId;
-      await taskRepository.logEvent(taskId, data);
+      ) as Model.Message;
+      taskId = message.refTaskId;
+      await taskRepository.logEvent(taskId, convertMessageToEvent(message));
       const task = await taskRepository.fetchById(taskId);
       task && sendWebhook(task);
     } catch (error) {
-      logger.error("InternalServerError", event, error);
+      logger.error("InternalServerError", error, event);
       if (taskId)
         await taskRepository.logEvent(
           taskId,
@@ -86,7 +85,7 @@ export async function sendWebhook(task: Model.Task) {
             }
           }
         } catch (error) {
-          logger.error("InternalServerError", error);
+          logger.error("InternalServerError", error, webhook, task);
         }
       })
     ));

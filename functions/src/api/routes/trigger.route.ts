@@ -3,7 +3,7 @@ import express from "express";
 import Busboy from "busboy";
 import { Readable } from "stream";
 import { asyncErrorCatcher, createPreparationEndedEvent } from "~/utils";
-// import { sendGeneratingMessage } from "~/task";
+import { sendGeneratingMessage } from "~/task";
 import GeneralRepository from "~/store/GeneralRepository";
 import TaskRepository from "~/store/TaskRepository";
 
@@ -77,7 +77,7 @@ router.post(
   endPreparationTask,
   async (req, res, next) => {
     const error = await Promise.race([
-      // sendGeneratingMessage(req.task),
+      sendGeneratingMessage(req.task),
       new Promise((res) => setTimeout(res, 10)),
     ]);
     if (error) next(error);

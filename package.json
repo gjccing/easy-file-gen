@@ -5,9 +5,7 @@
     "dev": "vinxi dev",
     "build": "vinxi build",
     "start": "vinxi start",
-    "set-cors": "gsutil cors set cors.json gs://easy-file-gen.appspot.com",
-    "fire-import": "fire-import storage && fire-import firestore",
-    "deploy:function": "firebase deploy --only functions"
+    "set-cors": "gsutil cors set cors.json gs://easy-file-gen.appspot.com"
   },
   "dependencies": {
     "@corvu/resizable": "^0.2.3",

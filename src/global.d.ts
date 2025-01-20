@@ -90,6 +90,7 @@ declare global {
       | DataMissingError
       | SendRendererEndedEvent
       | DataSyntaxError
+      | TemplateLoadingError
       | TemplateExecutionError
       | GenerationEndedEvent
       | WebhookEndedEvent
@@ -112,7 +113,7 @@ declare global {
       createdAt: Timestamp;
       name: "DataMissingError";
       message: "Required data is missing.";
-      missingTarget: "PreparationEndedEvent" | "templateStorageRef";
+      missingTarget: "PreparationEndedEvent";
     }
 
     interface SendRendererEndedEvent {
@@ -127,6 +128,14 @@ declare global {
       createdAt: Timestamp;
       name: "DataSyntaxError";
       message: "Syntax error in uploading data. The data does not conform to JSON format.";
+    }
+
+    interface TemplateLoadingError {
+      taskId: string;
+      createdAt: Timestamp;
+      name: "TemplateLoadingError";
+      message: "Error occurred while loading the template.";
+      error: string;
     }
 
     interface TemplateExecutionError {
@@ -170,6 +179,20 @@ declare global {
       createdAt: Timestamp;
       name: "ExecutionTimeoutError";
       message: "The execution of this task has timed out, please check your template and uploaded data or retry.";
+    }
+
+    interface Message {
+      source: "sandbox-nodejs18";
+      refTaskId: string;
+      type:
+        | "DataSyntaxError"
+        | "InternalServerError"
+        | "TemplateLoadingError"
+        | "GenerationEndedEvent"
+        | "TemplateExecutionError";
+      outputStorageRef?: string;
+      message?: string;
+      stack?: string;
     }
   }
 }

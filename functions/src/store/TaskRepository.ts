@@ -26,12 +26,14 @@ export default class TaskRepository extends GeneralRepository<Model.Task> {
   async logEvent(taskId: string, event: Model.Event) {
     let newValue: { state: Model.Task["state"]; downloadURL?: string } | null =
       null;
-    if (event.name === "GenerationEndedEvent")
+    if (event.name === "GenerationEndedEvent") {
+      const outputRef = bucket.file(event.outputStorageRef);
+      await outputRef.makePublic();
       newValue = {
         state: "FINISHED",
-        downloadURL: bucket.file(event.outputStorageRef).publicUrl(),
+        downloadURL: outputRef.publicUrl(),
       };
-    else if (event.name.endsWith("Error")) newValue = { state: "ERROR" };
+    } else if (event.name.endsWith("Error")) newValue = { state: "ERROR" };
 
     await this.updateById(taskId, {
       editedAt: Timestamp.now(),

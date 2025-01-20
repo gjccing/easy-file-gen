@@ -1,0 +1,24 @@
+{
+  "name": "sandbox-nodejs18",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "18"
+  },
+  "scripts": {
+    "debug": "node --inspect node_modules/.bin/functions-framework --target=sandbox-nodejs18 [--signature-type=cloudevent]",
+    "gcloud:create-topic": "gcloud pubsub topics create sandbox-nodejs18-pubsub",
+    "deploy": "gcloud functions deploy sandbox-nodejs18 --gen2 --runtime=nodejs18 --region=us-central1 --source=. --entry-point=sandbox-nodejs18 --trigger-topic=sandbox-nodejs18-pubsub"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.11.0",
+    "@google-cloud/functions-framework": "^3.4.5",
+    "@google-cloud/pubsub": "^4.9.0",
+    "@google-cloud/storage": "^7.15.0",
+    "lodash": "^4.17.21",
+    "lru-cache": "10.4",
+    "react": "^18.3.1",
+    "react_pdf_renderer_3_4_4": "npm:@react-pdf/renderer@^3.4.4",
+    "vm": "^0.1.0"
+  }
+}

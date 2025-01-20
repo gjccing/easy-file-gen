@@ -34,7 +34,7 @@ app.use((async (err, req, res, _) => {
       message = "The requested resource does not exist.";
       break;
     default:
-      logger.error("InternalServerError", req.path, err);
+      logger.error("InternalServerError", err, req.path);
       code = 500;
       message =
         "Internal Server Error: An unexpected issue occurred on our server. Please contact us for fixing the problem. We apologize for the inconvenience.";

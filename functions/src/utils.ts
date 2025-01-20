@@ -5,7 +5,7 @@ import type { SupportedEngine } from "../../src/global";
 export const getTopicByEngine = (engine: SupportedEngine) => {
   switch (engine) {
     case "@react-pdf/renderer@3.4.4":
-      return "nodejs-sandbox-pub";
+      return "sandbox-nodejs18-pubsub";
   }
   return "";
 };
@@ -50,14 +50,13 @@ export const createPreparationEndedEvent = (
 });
 
 export const createDataMissingError = (
-  taskId: string,
-  missingTarget: Model.DataMissingError["missingTarget"]
+  taskId: string
 ): Model.DataMissingError => ({
   taskId,
   createdAt: Timestamp.now() as Model.DataMissingError["createdAt"],
   name: "DataMissingError",
   message: "Required data is missing.",
-  missingTarget,
+  missingTarget: "PreparationEndedEvent",
 });
 
 export const createSendRendererEndedEvent = (
@@ -72,7 +71,7 @@ export const createSendRendererEndedEvent = (
 
 export const createTemplateExecutionError = (
   taskId: string,
-  error: string
+  error: string = ""
 ): Model.TemplateExecutionError => ({
   taskId,
   createdAt: Timestamp.now() as Model.TemplateExecutionError["createdAt"],
@@ -81,17 +80,32 @@ export const createTemplateExecutionError = (
   error,
 });
 
-export const createGenerationEndedEvent = (
-  refEvent: Model.PreparationEndedEvent
-): Model.GenerationEndedEvent => {
+export const getOutputStorageRef = (refEvent: Model.PreparationEndedEvent) => {
   let filename = refEvent.filename ?? `${firestoreAutoId()}.pdf`;
   if (!filename.endsWith(".pdf")) filename = `${filename}.pdf`;
-  const outputStorageRef = `output/${refEvent.userId}/${refEvent.taskId}/${filename}`;
+  return `output/${refEvent.userId}/${refEvent.taskId}/${filename}`;
+};
+
+export const createGenerationMessage = (
+  refEvent: Model.PreparationEndedEvent
+) => {
   return {
     taskId: refEvent.taskId,
+    inputStorageRef: refEvent.inputStorageRef,
+    templateStorageRef: refEvent.templateStorageRef,
+    engine: refEvent.engine,
+    outputStorageRef: getOutputStorageRef(refEvent),
+  };
+};
+
+export const createGenerationEndedEvent = (
+  message: Model.Message
+): Model.GenerationEndedEvent => {
+  return {
+    taskId: message.refTaskId,
     createdAt: Timestamp.now() as Model.GenerationEndedEvent["createdAt"],
     name: "GenerationEndedEvent",
-    outputStorageRef,
+    outputStorageRef: message.outputStorageRef ?? "",
     isDeleted: false,
   };
 };
@@ -134,3 +148,44 @@ export const createExecutionTimeoutError = (
   message:
     "The execution of this task has timed out, please check your template and uploaded data or retry.",
 });
+
+export const createDataSyntaxError = (
+  taskId: string
+): Model.DataSyntaxError => ({
+  taskId,
+  createdAt: Timestamp.now() as Model.DataSyntaxError["createdAt"],
+  name: "DataSyntaxError",
+  message:
+    "Syntax error in uploading data. The data does not conform to JSON format.",
+});
+
+export const createTemplateLoadingError = (
+  taskId: string,
+  error: string = ""
+): Model.TemplateLoadingError => ({
+  taskId,
+  createdAt: Timestamp.now() as Model.TemplateLoadingError["createdAt"],
+  name: "TemplateLoadingError",
+  message: "Error occurred while loading the template.",
+  error,
+});
+
+export const convertMessageToEvent = (message: Model.Message) => {
+  if (message.type === "DataSyntaxError") {
+    return createDataSyntaxError(message.refTaskId);
+  } else if (message.type === "TemplateLoadingError") {
+    return createTemplateLoadingError(
+      message.refTaskId,
+      message.stack ?? message.message
+    );
+  } else if (message.type === "GenerationEndedEvent") {
+    return createGenerationEndedEvent(message);
+  } else if (message.type === "TemplateExecutionError") {
+    return createTemplateExecutionError(
+      message.refTaskId,
+      message.stack ?? message.message
+    );
+  } else {
+    return createInternalServerError(message.refTaskId);
+  }
+};

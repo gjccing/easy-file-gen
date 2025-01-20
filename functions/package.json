@@ -7,7 +7,9 @@
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "fire-import": "fire-import storage && fire-import firestore",
+    "gcloud:create-topic": "gcloud pubsub topics create generation-ended-pubsub"
   },
   "engines": {
     "node": "18"
@@ -21,7 +23,7 @@
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "firebase-admin": "^12.1.0",
-    "firebase-functions": "^5.0.0",
+    "firebase-functions": "^6.2.0",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "lru-cache": "^10.4.3",
