@@ -26,7 +26,6 @@ const MonacoEditor = clientOnly(
 
 const TemplateSchema = v.object({
   enabled: v.boolean(),
-  outputType: v.enum(OutputType, "Invalid output file type"),
   name: v.pipe(
     v.string(),
     v.maxLength(50, "The name is too long."),
@@ -36,18 +35,15 @@ const TemplateSchema = v.object({
     v.string(),
     v.maxLength(500, "The description is too long.")
   ),
+  outputType: v.enum(OutputType, "Invalid output file type"),
   engine: v.enum(SupportedEngine, "Please pick a engine from the menu."),
-  // contentStorageRef: v.string(),
-  content: v.file(),
-  compiledContent: v.optional(v.file()),
 });
 
 export type TemplateFormValues = InferInput<typeof TemplateSchema>;
 
-export function TemplateForm(props: {
+export function TemplatePreviewReadOnlyForm(props: {
   class?: string | undefined;
   defaultValue?: TemplateFormValues;
-  onSubmit: SubmitHandler<TemplateFormValues>;
 }) {
   const [templateForm, { Form, Field }] = createForm<TemplateFormValues>({
     validate: valiForm(TemplateSchema),
@@ -58,7 +54,7 @@ export function TemplateForm(props: {
   });
 
   return (
-    <Form class={cn("grid gap-6", props.class)} onSubmit={props.onSubmit}>
+    <Form class={cn("grid gap-6", props.class)} onSubmit={() => {}}>
       <Field name="enabled" type="boolean">
         {(field) => (
           <FieldSet
@@ -69,6 +65,7 @@ export function TemplateForm(props: {
             <Switch
               checked={field.value}
               onChange={(value) => setValue(templateForm, field.name, value)}
+              disabled
             >
               <SwitchControl>
                 <SwitchThumb />
@@ -91,6 +88,7 @@ export function TemplateForm(props: {
               class="md:w-[50%]"
               maxlength="50"
               type="text"
+              disabled
             />
           </FieldSet>
         )}
@@ -108,6 +106,7 @@ export function TemplateForm(props: {
               value={field.value}
               maxlength="500"
               autoResize
+              disabled
             />
           </FieldSet>
         )}
@@ -121,6 +120,7 @@ export function TemplateForm(props: {
           >
             <OutputTypeSelect
               value={field.value}
+              disabled
               onChange={(value) => setValue(templateForm, field.name, value)}
             />
           </FieldSet>
@@ -146,51 +146,13 @@ export function TemplateForm(props: {
                     if (value) setValue(templateForm, field.name, value);
                     else reset(templateForm, field.name);
                   }}
+                  disabled
                 />
               )}
             </Show>
           </FieldSet>
         )}
       </Field>
-      <Separator />
-      <Field name="content" type="File">
-        {(field) => (
-          <Show
-            when={getValue(templateForm, "engine")}
-            fallback={<div>Please select an template engine first.</div>}
-          >
-            {(engine) => (
-              <MonacoEditor
-                class="h-[75svh]"
-                preset={engine()}
-                initialValue={field.value}
-                onChange={(file, compiledFile) => {
-                  setValue(templateForm, field.name, file);
-                  setValue(templateForm, "compiledContent", compiledFile);
-                }}
-              />
-            )}
-          </Show>
-        )}
-      </Field>
-      <Field name="compiledContent" type="File">
-        {(field, props) => (
-          <input
-            {...props}
-            id={field.name}
-            type="file"
-            style={{ display: "none" }}
-          />
-        )}
-      </Field>
-      <div>
-        <Button type="submit" disabled={templateForm.submitting}>
-          {templateForm.submitting && (
-            <IconLoader class="mr-2 size-4 animate-spin" />
-          )}
-          Submit
-        </Button>
-      </div>
     </Form>
   );
 }

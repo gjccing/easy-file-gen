@@ -1,20 +1,9 @@
 import { cn } from "~/lib/utils";
 import {
-  Combobox,
-  ComboboxContent,
-  ComboboxControl,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxItemLabel,
-  ComboboxSection,
-  ComboboxTrigger,
-} from "~/components/ui/combobox";
-import {
   TextFieldInput,
   TextFieldDescription,
 } from "~/components/ui/text-field";
-import { IconX, IconTag } from "~/components/icons";
-import { Button } from "~/components/ui/button";
+import { IconTag } from "~/components/icons";
 import { For, Show } from "solid-js";
 import { Badge } from "~/components/ui/badge";
 

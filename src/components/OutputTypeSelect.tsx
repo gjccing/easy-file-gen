@@ -30,6 +30,8 @@ function OutputTypeSelectItem(props: SelectBaseItemComponentProps<OutputType>) {
 export default function OutputTypeSelect(props: {
   class?: string;
   value?: OutputType;
+  readOnly?: boolean;
+  disabled?: boolean;
   onChange?: (value: OutputType) => void;
 }) {
   return (
@@ -42,6 +44,8 @@ export default function OutputTypeSelect(props: {
       onChange={(value) => {
         if (value) props.onChange?.(value);
       }}
+      readOnly={props.readOnly}
+      disabled={props.disabled}
     >
       <SelectTrigger class="w-auto">
         <SelectValue<string>>{(state) => state.selectedOption()}</SelectValue>

@@ -40,7 +40,7 @@ declare global {
   namespace Model {
     // Webhook interface
     interface Webhook {
-      type: "FINISHED" | "ERROR";
+      type: WebhookType;
       url: string;
       retryLimit: number;
     }
@@ -61,8 +61,6 @@ declare global {
       authorId: string;
       createdAt: Timestamp;
       editedAt: Timestamp;
-      callingCount: number;
-      errorCount: number;
 
       enabled: boolean;
       outputType: OutputType;

@@ -115,11 +115,38 @@ export default function SettingsForm(props: {
   };
   return (
     <Form class={cn("grid gap-6", props.class)} onSubmit={props.onSubmit}>
+      <FieldSet
+        label="Authorization"
+        description="Please carry this header and its value with your file-generation request"
+      >
+        <div class="flex space-x-2">
+          <TextFieldInput
+            class="w-full"
+            type="text"
+            disabled
+            value={apiToken()}
+          />
+          <Tooltip>
+            <TooltipTrigger
+              class="shrink-0"
+              as={Button<"button">}
+              variant="secondary"
+              onClick={() => navigator.clipboard.writeText(apiToken() ?? "")}
+            >
+              <IconCopy />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Copied!</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </FieldSet>
       <Field name="apiToken.token" type="string">
         {(field, props) => (
           <FieldSet
+            class="ml-4"
             label="Token"
-            description="Required. Please enter an alphanumeric string which only includes A-B, a-b, 0-9. The token is required to call the generating file API to prevent your template from being abused. Please keep the token between 50 and 150 characters."
+            description="Required. Please enter an alphanumeric string which only includes A-B, a-b, 0-9. The token is required to call the generation file API to prevent your template from being abused. Please keep the token between 50 and 150 characters."
             invalid={Boolean(field.active && field.error)}
             error={field.active ? field.error : undefined}
           >
@@ -151,6 +178,7 @@ export default function SettingsForm(props: {
       <Field name="apiToken.expiresAt" type="string">
         {(field, props) => (
           <FieldSet
+            class="ml-4"
             label="Expires At"
             description="If you don't want the token to expire, leave it blank."
             invalid={Boolean(field.active && field.error)}
@@ -165,32 +193,6 @@ export default function SettingsForm(props: {
           </FieldSet>
         )}
       </Field>
-      <FieldSet
-        label="Authorization"
-        description="Please carry this header and its value with your file-generating request"
-      >
-        <div class="flex space-x-2">
-          <TextFieldInput
-            class="w-full"
-            type="text"
-            disabled
-            value={apiToken()}
-          />
-          <Tooltip>
-            <TooltipTrigger
-              class="shrink-0"
-              as={Button<"button">}
-              variant="secondary"
-              onClick={() => navigator.clipboard.writeText(apiToken() ?? "")}
-            >
-              <IconCopy />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Copied!</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </FieldSet>
       <Separator />
       <h3>Access-Control-Allow-Origin</h3>
       <p>

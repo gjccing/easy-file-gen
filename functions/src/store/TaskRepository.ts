@@ -31,7 +31,7 @@ export default class TaskRepository extends GeneralRepository<Model.Task> {
       await outputRef.makePublic();
       newValue = {
         state: "FINISHED",
-        downloadURL: outputRef.publicUrl(),
+        downloadURL: outputRef.publicUrl().replace(/%2F/g, "/"),
       };
     } else if (event.name.endsWith("Error")) newValue = { state: "ERROR" };
 

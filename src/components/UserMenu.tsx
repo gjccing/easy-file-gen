@@ -1,5 +1,4 @@
 import { onMount, createSignal } from "solid-js";
-import { useNavigate } from "@solidjs/router";
 import { auth } from "~/lib/firebase";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
@@ -12,32 +11,30 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 
-export default function UserNav() {
-  const navigate = useNavigate();
+export default function UserMenu() {
   const [profile, setProfile] = createSignal<{
     displayName: string | null;
     email: string | null;
     photoURL: string | null;
     photoFB: string | null;
   }>();
-  onMount(() => {
-    auth.onAuthStateChanged(() => {
-      if (auth.currentUser) {
-        setProfile({
-          ...auth.currentUser,
-          photoFB: (auth.currentUser.displayName || "")
-            .split(" ")
-            .slice(0, 2)
-            .map((i) => i[0].toUpperCase())
-            .join(""),
-        });
-      }
-    });
+  onMount(async () => {
+    await auth.authStateReady();
+    if (auth.currentUser) {
+      setProfile({
+        ...auth.currentUser,
+        photoFB: (auth.currentUser.displayName || "")
+          .split(" ")
+          .slice(0, 2)
+          .map((i) => i[0].toUpperCase())
+          .join(""),
+      });
+    }
   });
 
   async function handleClickLogout() {
-    auth.signOut();
-    navigate("/");
+    await auth.signOut();
+    window.location.href = "/";
   }
 
   return (

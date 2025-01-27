@@ -1,5 +1,5 @@
-import { onMount } from "solid-js";
-import { useNavigate } from "@solidjs/router";
+import { createEffect, onCleanup, onMount } from "solid-js";
+import { useNavigate, useSearchParams } from "@solidjs/router";
 
 import { cn } from "~/lib/utils";
 import { auth } from "~/lib/firebase";
@@ -9,11 +9,9 @@ import { UserAuthForm } from "~/components/signin/UserAuthForm";
 
 export default function Signin() {
   const navigate = useNavigate();
-  onMount(() => {
-    auth.onAuthStateChanged(() => {
-      if (auth.currentUser !== null) navigate("/templates", { replace: true });
-    });
-  });
+  const [searchParams] = useSearchParams<{
+    redirect?: string;
+  }>();
 
   return (
     <div class="container relative h-svh flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
@@ -49,7 +47,13 @@ export default function Signin() {
             </h1>
             <p class="text-sm text-muted-foreground">Enter your email below</p>
           </div>
-          <UserAuthForm onLogin={() => navigate("/templates")} />
+          <UserAuthForm
+            onLogin={() => {
+              const { redirect } = searchParams;
+              debugger;
+              navigate(redirect ?? "/templates", { replace: true });
+            }}
+          />
           <p class="px-8 text-center text-sm text-muted-foreground">
             By clicking continue, you agree to our{" "}
             <a

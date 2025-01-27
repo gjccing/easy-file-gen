@@ -34,6 +34,8 @@ export default function EngineCombobox(props: {
   class?: string;
   outputType: OutputType;
   value?: SupportedEngine;
+  readOnly?: boolean;
+  disabled?: boolean;
   onChange?: (value?: SupportedEngine) => void;
 }) {
   const getSelectedEngine = () =>
@@ -75,6 +77,8 @@ export default function EngineCombobox(props: {
           </a>
         </div>
       )}
+      readOnly={props.readOnly}
+      disabled={props.disabled}
     >
       <ComboboxControl aria-label="Template Engine" class={props.class}>
         {(state) => (
@@ -84,7 +88,7 @@ export default function EngineCombobox(props: {
                 (event.currentTarget.value = props.value ?? "")
               }
             />
-            <Show when={props.value}>
+            <Show when={props.value && !props.readOnly && !props.disabled}>
               <Button
                 class="rounded-[50%] p-2 h-auto"
                 type="button"

@@ -1,17 +1,9 @@
-import type {
-  CollectionReference,
-  QueryConstraint,
-  DocumentData,
-  QuerySnapshot,
-  DocumentSnapshot,
-} from "firebase/firestore";
+import type { QuerySnapshot, DocumentSnapshot } from "firebase/firestore";
 import {
   query,
   collection,
   where,
   orderBy,
-  startAfter,
-  endBefore,
   limit,
   getDocs,
   getDoc,
@@ -19,73 +11,25 @@ import {
   setDoc,
   updateDoc,
   Timestamp,
-  limitToLast,
 } from "firebase/firestore";
-import {
-  ref,
-  uploadString,
-  getDownloadURL,
-  getMetadata,
-} from "firebase/storage";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from "~/lib/firebase";
 import { firestoreAutoId } from "~/lib/utils";
 import { OutputType, SupportedEngine } from "~/global.d";
 import md5 from "md5";
 
-async function buildTemplateListQuery(): Promise<
-  [CollectionReference<DocumentData, DocumentData>, ...QueryConstraint[]]
-> {
+export const getTemplates = async (limitNumber: number) => {
   await auth.authStateReady();
-  return [
-    collection(db, "templates"),
-    where("authorId", "==", auth.currentUser?.uid),
-    where("isDeleted", "!=", true),
-    orderBy("createdAt", "desc"),
-  ];
-}
-
-function convertSnapshotToTemplateList(
-  snapshot: QuerySnapshot<Model.Template, DocumentData>
-) {
-  return snapshot.docs.map<Model.Template>((doc) => ({
-    ...doc.data(),
-    id: doc.id,
-  }));
-}
-
-export const getTemplateDocsFirstPage = async (perPage: number) => {
-  const querySnapshot = (await getDocs(
-    query(...(await buildTemplateListQuery()), limit(perPage))
-  )) as QuerySnapshot<Model.Template>;
-  return convertSnapshotToTemplateList(querySnapshot);
-};
-
-export const getTemplateDocsStartAfterCreateAt = async (
-  startAfterCreateAt: Timestamp,
-  perPage: number
-) => {
   const querySnapshot = (await getDocs(
     query(
-      ...(await buildTemplateListQuery()),
-      limit(perPage),
-      startAfter(startAfterCreateAt)
+      collection(db, "templates"),
+      where("authorId", "==", auth.currentUser?.uid),
+      where("isDeleted", "!=", true),
+      orderBy("createdAt", "desc"),
+      limit(limitNumber)
     )
   )) as QuerySnapshot<Model.Template>;
-  return convertSnapshotToTemplateList(querySnapshot);
-};
-
-export const getTemplateDocsEndBeforeCreateAt = async (
-  endBeforeCreateAt: Timestamp,
-  perPage: number
-) => {
-  const querySnapshot = (await getDocs(
-    query(
-      ...(await buildTemplateListQuery()),
-      limitToLast(perPage),
-      endBefore(endBeforeCreateAt)
-    )
-  )) as QuerySnapshot<Model.Template>;
-  return convertSnapshotToTemplateList(querySnapshot);
+  return querySnapshot.docs.map((doc) => doc.data());
 };
 
 export const getTemplateById = async (id: string) => {

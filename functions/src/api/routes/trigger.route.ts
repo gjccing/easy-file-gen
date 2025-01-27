@@ -16,7 +16,7 @@ const router = express.Router();
 
 const checkRequestedTemplate = asyncErrorCatcher(async (req, _, next) => {
   const template = await templateRepository.fetchById(req.params.templateId);
-  if (!template) {
+  if (!template || template.isDeleted) {
     next(404);
   } else if (!template.enabled) {
     next(403);
