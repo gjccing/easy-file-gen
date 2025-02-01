@@ -21,11 +21,7 @@ export default function Details() {
   const { template, loading: loadingTempl } = createTemplateResource({
     templateId,
   });
-  const {
-    tasks,
-    loading: loadingTasks,
-    loadNext,
-  } = createTaskPageResource({
+  const { tasks, loading: loadingTasks } = createTaskPageResource({
     templateId,
   });
   return (

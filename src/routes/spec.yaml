@@ -1,0 +1,527 @@
+openapi: 3.0.3
+info:
+  title: Easy File Gen API
+  version: "1.0.0"
+servers:
+  - url: https://us-central1-easy-file-gen.cloudfunctions.net/api
+paths:
+  /trigger/form-data/{templateId}/{filename}:
+    post:
+      tags:
+        - Trigger
+      summary: "Start to generate a file by uploading a file"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: "Template ID"
+          schema:
+            type: string
+        - name: filename
+          in: path
+          required: true
+          description: "Name for the generation file"
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "Data used in conjunction with the template"
+      responses:
+        '200':
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        '400':
+          description: "The request content is empty."
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  message:
+                    enum:
+                      - The request content is empty. Please bring JSON data or upload a JSON file for generating the file.
+        '401':
+          description: "User authentication failed."
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  message:
+                    enum:
+                      - User authentication failed.
+        '404':
+          description: "The requested resource does not exist."
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  message:
+                    enum:
+                      - The requested resource does not exist.
+        '500':
+          description: "Internal Server Error"
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  message:
+                    enum:
+                      - Internal Server Error: An unexpected issue occurred on our server. Please contact us for fixing the problem. We apologize for the inconvenience.
+  /trigger/json/{templateId}/{filename}:
+    post:
+      tags:
+        - Trigger
+      summary: "Start to generate a file by JSON in the payload"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: "Template ID"
+          schema:
+            type: string
+        - name: filename
+          in: path
+          required: true
+          description: "Name for the generation file"
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: "Data used in conjunction with the template"
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - type: object
+                  additionalProperties: true
+                - type: array
+                - type: string
+                - type: number
+                - type: boolean
+      responses:
+        '200':
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        '400':
+          description: "The request content is empty."
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  message:
+                    enum:
+                      - The request content is empty. Please bring JSON data or upload a JSON file for generating the file.
+        '401':
+          description: "User authentication failed."
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  message:
+                    enum:
+                      - User authentication failed.
+        '404':
+          description: "The requested resource does not exist."
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  message:
+                    enum:
+                      - The requested resource does not exist.
+        '500':
+          description: "Internal Server Error"
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  message:
+                    enum:
+                      - Internal Server Error: An unexpected issue occurred on our server. Please contact us for fixing the problem. We apologize for the inconvenience.
+  /state/{taskId}:
+    get:
+      tags:
+        - State
+      summary: "get the task state"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: "Task ID"
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        '404':
+          description: "The requested resource does not exist."
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  message:
+                    enum:
+                      - The requested resource does not exist.
+        '500':
+          description: "Internal Server Error"
+          content:
+            application/json: 
+              schema:
+                type: object
+                properties:
+                  message:
+                    enum:
+                      - Internal Server Error: An unexpected issue occurred on our server. Please contact us for fixing the problem. We apologize for the inconvenience.
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        editedAt:
+          $ref: "#/components/schemas/Timestamp"
+        userId:
+          type: string
+        templateId:
+          type: string
+        state:
+          type: string
+          enum:
+            - PREPARING
+            - GENERATING
+            - FINISHED
+            - ERROR
+        downloadURL:
+          type: string
+        events:
+          type: array
+          items:
+            anyOf:
+              - $ref: "#/components/schemas/PreparationEndedEvent"
+              - $ref: "#/components/schemas/DataMissingError"
+              - $ref: "#/components/schemas/SendRendererEndedEvent"
+              - $ref: "#/components/schemas/DataSyntaxError"
+              - $ref: "#/components/schemas/TemplateLoadingError"
+              - $ref: "#/components/schemas/TemplateExecutionError"
+              - $ref: "#/components/schemas/GenerationEndedEvent"
+              - $ref: "#/components/schemas/WebhookEndedEvent"
+              - $ref: "#/components/schemas/InternalServerError"
+              - $ref: "#/components/schemas/ExecutionTimeoutError"
+      required:
+        - id
+        - createdAt
+        - editedAt
+        - userId
+        - templateId
+        - state
+        - events
+      additionalProperties: false
+
+    Timestamp:
+      type: object
+      properties:
+        _seconds:
+          type: number
+        _nanoseconds:
+          type: number
+      required:
+        - _seconds
+        - _nanoseconds
+      additionalProperties: false
+    
+    PreparationEndedEvent:
+      type: object
+      properties:
+        taskId:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        name:
+          enum:
+            - PreparationEndedEvent
+        userId:
+          type: string
+        filename:
+          type: string
+        inputStorageRef:
+          type: string
+        engine:
+          type: string
+        templateStorageRef:
+          type: string
+      required:
+        - taskId
+        - createdAt
+        - name
+        - userId
+        - inputStorageRef
+        - engine
+        - templateStorageRef
+      additionalProperties: false
+
+    DataMissingError:
+      type: object
+      properties:
+        taskId:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        name:
+          type: string
+          enum:
+            - DataMissingError
+        message:
+          type: string
+          enum:
+            - Required data is missing.
+        missingTarget:
+          type: string
+          enum:
+            - PreparationEndedEvent
+      required:
+        - taskId
+        - createdAt
+        - name
+        - message
+        - missingTarget
+      additionalProperties: false
+
+    SendRendererEndedEvent:
+      type: object
+      properties:
+        taskId:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        name:
+          type: string
+          enum:
+            - SendRendererEndedEvent
+        messageId:
+          type: string
+      required:
+        - taskId
+        - createdAt
+        - name
+        - messageId
+      additionalProperties: false
+
+    DataSyntaxError:
+      type: object
+      properties:
+        taskId:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        name:
+          type: string
+          enum:
+            - DataSyntaxError
+        message:
+          type: string
+          enum:
+            - Syntax error in uploading data. The data does not conform to JSON format.
+      required:
+        - taskId
+        - createdAt
+        - name
+        - message
+      additionalProperties: false
+
+    TemplateLoadingError:
+      type: object
+      properties:
+        taskId:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        name:
+          type: string
+          enum:
+            - TemplateLoadingError
+        message:
+          type: string
+          enum:
+            - Error occurred while loading the template.
+        error:
+          type: string
+      required:
+        - taskId
+        - createdAt
+        - name
+        - message
+        - error
+      additionalProperties: false
+
+    TemplateExecutionError:
+      type: object
+      properties:
+        taskId:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        name:
+          type: string
+          enum:
+            - TemplateExecutionError
+        message:
+          type: string
+          enum:
+            - Error occurred while executing the template.
+        error:
+          type: string
+      required:
+        - taskId
+        - createdAt
+        - name
+        - message
+        - error
+      additionalProperties: false
+
+    GenerationEndedEvent:
+      type: object
+      properties:
+        taskId:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        name:
+          type: string
+          enum:
+            - GenerationEndedEvent
+        outputStorageRef:
+          type: string
+        isDeleted:
+          type: boolean
+      required:
+        - taskId
+        - createdAt
+        - name
+        - outputStorageRef
+        - isDeleted
+      additionalProperties: false
+
+    WebhookEndedEvent:
+      type: object
+      properties:
+        taskId:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        name:
+          type: string
+          enum:
+            - WebhookEndedEvent
+        type:
+          type: string
+          enum:
+            - FINISHED
+            - ERROR
+        url:
+          type: string
+        response:
+          type: object
+          properties:
+            status:
+              type: string
+            headers:
+              type: string
+            body:
+              type: string
+          required:
+            - status
+            - headers
+            - body
+          additionalProperties: false
+      required:
+        - taskId
+        - createdAt
+        - name
+        - type
+        - url
+        - response
+      additionalProperties: false
+
+    InternalServerError:
+      type: object
+      properties:
+        taskId:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        name:
+          type: string
+          enum:
+            - InternalServerError
+        message:
+          type: string
+          enum:
+            - An unexpected issue occurred on our server. Please contact us for fixing the problem. We apologize for the inconvenience.
+      required:
+        - taskId
+        - createdAt
+        - name
+        - message
+      additionalProperties: false
+
+    ExecutionTimeoutError:
+      type: object
+      properties:
+        taskId:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        name:
+          type: string
+          enum:
+            - ExecutionTimeoutError
+        message:
+          type: string
+          enum:
+            - The execution of this task has timed out, please check your template and uploaded data or retry.
+      required:
+        - taskId
+        - createdAt
+        - name
+        - message
+      additionalProperties: false

@@ -50,7 +50,6 @@ export default function Signin() {
           <UserAuthForm
             onLogin={() => {
               const { redirect } = searchParams;
-              debugger;
               navigate(redirect ?? "/templates", { replace: true });
             }}
           />

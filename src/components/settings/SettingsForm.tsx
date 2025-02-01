@@ -11,7 +11,7 @@ import { TextFieldInput } from "~/components/ui/text-field";
 import FieldSet from "~/components/FieldSet";
 import type { InferInput } from "valibot";
 import * as v from "valibot";
-import { cn } from "~/lib/utils";
+import { cn, makeAPIToken } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { IconLoader, IconCopy, IconX } from "~/components/icons";
 import { Separator } from "~/components/ui/separator";
@@ -23,7 +23,6 @@ import {
 import { WebhookType } from "~/global.d";
 import WebhookTypeSelect from "./WebhookTypeSelect";
 import WebhookDeleteDialog from "./WebhookDeleteDialog";
-import jwtSign from "jwt-encode";
 
 function genRandAlphanumericStr(length: number): string {
   const charset =
@@ -105,14 +104,14 @@ export default function SettingsForm(props: {
       },
     });
   const apiToken = () => {
-    let payload: Partial<{ userId: string; expiresAt: number }> = {
-      userId: props.uid,
-    };
-    const expiresAt = getValue(settingsForm, "apiToken.expiresAt");
-    if (expiresAt) payload.expiresAt = new Date(expiresAt).getTime();
-    const token = getValue(settingsForm, "apiToken.token") ?? "";
-    return `Bearer ${token ? jwtSign(payload, token) : ""}`;
+    return makeAPIToken(
+      props.uid,
+      getValue(settingsForm, "apiToken.token"),
+      getValue(settingsForm, "apiToken.expiresAt")
+    );
   };
+
+  const [openedCopiedTooltip, setOpenedCopiedTooltip] = createSignal(false);
   return (
     <Form class={cn("grid gap-6", props.class)} onSubmit={props.onSubmit}>
       <FieldSet
@@ -126,12 +125,16 @@ export default function SettingsForm(props: {
             disabled
             value={apiToken()}
           />
-          <Tooltip>
+          <Tooltip open={openedCopiedTooltip()}>
             <TooltipTrigger
               class="shrink-0"
               as={Button<"button">}
               variant="secondary"
-              onClick={() => navigator.clipboard.writeText(apiToken() ?? "")}
+              onClick={() => {
+                navigator.clipboard.writeText(apiToken() ?? "");
+                setOpenedCopiedTooltip(true);
+                setTimeout(() => setOpenedCopiedTooltip(false), 3000);
+              }}
             >
               <IconCopy />
             </TooltipTrigger>
@@ -246,7 +249,7 @@ export default function SettingsForm(props: {
         )}
       </FieldArray>
       <Separator />
-      <h3>Webhooks</h3>
+      <h3 id="webhooks">Webhooks</h3>
       <p>
         Please enter a formatted url that includes protocol, domain and
         path(optional), ex: https://example.com/path"

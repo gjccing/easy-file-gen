@@ -10,10 +10,10 @@ const db = admin.firestore();
 
 export default class GeneralRepository<T extends Object> {
   collectionRef: CollectionReference;
-  cacheIdToTask: LRUCache<string, T>;
+  cacheIdToData: LRUCache<string, T>;
   constructor(collection: string) {
     this.collectionRef = db.collection(collection);
-    this.cacheIdToTask = new LRUCache<string, T>({
+    this.cacheIdToData = new LRUCache<string, T>({
       ttl: 1000 * 10,
       ttlAutopurge: true,
       allowStale: false,
@@ -22,13 +22,13 @@ export default class GeneralRepository<T extends Object> {
     });
   }
   async fetchById(id: string, forcedUpdate?: boolean): Promise<T | undefined> {
-    if (this.cacheIdToTask.has(id) && !forcedUpdate) {
-      return this.cacheIdToTask.get(id);
+    if (this.cacheIdToData.has(id) && !forcedUpdate) {
+      return this.cacheIdToData.get(id);
     } else {
       const snapshot = await this.collectionRef.doc(id).get();
       if (snapshot.exists) {
         const data = snapshot.data() as T;
-        this.cacheIdToTask.set(id, data);
+        this.cacheIdToData.set(id, data);
         return data;
       }
     }
@@ -39,7 +39,7 @@ export default class GeneralRepository<T extends Object> {
       editedAt: Timestamp.now(),
       ...(typeof value === "object" ? value : null),
     });
-    this.cacheIdToTask.delete(id);
+    this.cacheIdToData.delete(id);
   }
   async setById(id: string, value: PartialWithFieldValue<T>) {
     const _value = Object.assign(
@@ -51,7 +51,7 @@ export default class GeneralRepository<T extends Object> {
       value
     ) as T;
     await this.collectionRef.doc(id).set(_value);
-    this.cacheIdToTask.set(id, _value);
+    this.cacheIdToData.set(id, _value);
     return _value;
   }
 }

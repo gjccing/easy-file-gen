@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import express from "express";
+import express, { RequestHandler } from "express";
 import Busboy from "busboy";
 import { Readable } from "stream";
 import { asyncErrorCatcher, createPreparationEndedEvent } from "~/utils";
@@ -34,7 +34,7 @@ const createTask = asyncErrorCatcher(async (req, _, next) => {
   next();
 });
 
-const saveUpload = asyncErrorCatcher(async (req, _, next) => {
+const saveUploadFile = asyncErrorCatcher(async (req, _, next) => {
   const fileRef = bucket.file(`input/${req.userId}/${req.task.id}.json`);
   if (req.header("Content-Type")?.startsWith("multipart/form-data")) {
     const [, file] = await new Promise<[string, Readable, Busboy.FileInfo]>(
@@ -49,7 +49,14 @@ const saveUpload = asyncErrorCatcher(async (req, _, next) => {
     );
     await fileRef.save(file, { contentType: "application/json" });
     next();
-  } else if (req.rawBody) {
+  } else {
+    next(400);
+  }
+});
+
+const saveRequestBody = asyncErrorCatcher(async (req, _, next) => {
+  const fileRef = bucket.file(`input/${req.userId}/${req.task.id}.json`);
+  if (req.rawBody) {
     await fileRef.save(req.rawBody, { contentType: "application/json" });
     next();
   } else {
@@ -69,20 +76,31 @@ const endPreparationTask = asyncErrorCatcher(async (req, _, next) => {
   next();
 });
 
-router.post(
-  "/:templateId/:filename",
-  checkRequestedTemplate,
-  createTask,
-  saveUpload,
-  endPreparationTask,
-  async (req, res, next) => {
-    const error = await Promise.race([
-      sendGeneratingMessage(req.task),
-      new Promise((res) => setTimeout(res, 10)),
-    ]);
-    if (error) next(error);
-    else res.status(200).send(req.task).end();
-  }
-);
+const responseResult: RequestHandler = async (req, res, next) => {
+  const error = await Promise.race([
+    sendGeneratingMessage(req.task),
+    new Promise((res) => setTimeout(res, 10)),
+  ]);
+  if (error) next(error);
+  else res.status(200).send(req.task).end();
+};
+
+router
+  .post(
+    "/form-data/:templateId/:filename",
+    checkRequestedTemplate,
+    createTask,
+    saveUploadFile,
+    endPreparationTask,
+    responseResult
+  )
+  .post(
+    "/json/:templateId/:filename",
+    checkRequestedTemplate,
+    createTask,
+    saveRequestBody,
+    endPreparationTask,
+    responseResult
+  );
 
 export default router;

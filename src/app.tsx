@@ -3,6 +3,7 @@ import { FileRoutes } from "@solidjs/start/router";
 import { MetaProvider } from "@solidjs/meta";
 import { Suspense } from "solid-js";
 import { Toaster } from "~/components/ui/toast";
+import "swagger-ui/dist/swagger-ui.css";
 import "./app.css";
 
 export default function App() {

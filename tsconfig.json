@@ -12,7 +12,8 @@
     "strict": true,
     "noImplicitAny": false,
     "types": [
-      "vinxi/types/client"
+      "vinxi/types/client",
+      "@modyfi/vite-plugin-yaml/modules"
     ],
     "isolatedModules": true,
     "paths": {

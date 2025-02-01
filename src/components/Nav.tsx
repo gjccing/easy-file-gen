@@ -41,6 +41,14 @@ export default function Nav() {
           Settings
         </A>
         <A
+          href="/api"
+          class={`text-sm font-medium ${active(
+            "/api"
+          )} transition-colors hover:text-primary`}
+        >
+          API
+        </A>
+        <A
           href="/about"
           class={`text-sm font-medium ${active(
             "/about"

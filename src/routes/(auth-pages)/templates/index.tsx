@@ -28,9 +28,13 @@ import Page from "~/components/Page";
 
 export default function Templates() {
   const navigate = useNavigate();
-  const { templates, loading, load } = createTemplatesResource();
+  const {
+    templates,
+    loading: loadingTempl,
+    load: loadTemplates,
+  } = createTemplatesResource();
   return (
-    <Page title="Templates" loading={loading()}>
+    <Page title="Templates" loading={loadingTempl()}>
       <div class="flex items-center gap-4">
         <p class="text-sm text-muted-foreground">
           Template Number: {templates().length} / 10
@@ -85,7 +89,7 @@ export default function Templates() {
                     >
                       {template.engine}
                     </TableCell>
-                    <TableCell class="w-[180px] text-right">
+                    <TableCell class="w-[200px] text-right">
                       <Tooltip openDelay={0} closeDelay={0}>
                         <TooltipTrigger
                           as={Button}
@@ -122,7 +126,7 @@ export default function Templates() {
                             size="icon"
                             onDelete={async () => {
                               await deleteTemplateById(template.id);
-                              await load();
+                              await loadTemplates();
                             }}
                           >
                             <IconFileX2 />
