@@ -3,6 +3,7 @@ import * as logger from "firebase-functions/logger";
 import express, { ErrorRequestHandler } from "express";
 import helmet from "helmet";
 import authorization from "./middlewares/authorization";
+import corsForPublic from "cors";
 import cors from "./middlewares/cors";
 
 import triggerRoutes from "./routes/trigger.route";
@@ -11,6 +12,7 @@ import stateRoutes from "./routes/state.route";
 const app = express();
 
 app.use(helmet());
+app.options("*", corsForPublic());
 app.use(authorization);
 app.use(cors);
 
