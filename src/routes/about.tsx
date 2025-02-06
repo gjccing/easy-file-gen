@@ -178,6 +178,10 @@ export default function About() {
               <figcaption>Fig.6 - Omitted components</figcaption>
             </figure>
           </div>
+
+          <a href="https://github.com/gjccing/easy-file-gen">
+            https://github.com/gjccing/easy-file-gen
+          </a>
         </main>
       </div>
     </div>
