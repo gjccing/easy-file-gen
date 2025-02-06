@@ -88,8 +88,8 @@ export default function About() {
             </ol>
             <p class="my-4">
               The first two types will be discussed in this article. The scope
-              of the third type is too small and the scenario of fourth is too
-              niche.
+              of the third type is too small and the scenario of the fourth is
+              too niche.
             </p>
             <h2 class="text-3xl my-8">Implementation Plan</h2>
             <p class="my-4">
@@ -116,14 +116,14 @@ export default function About() {
             <h2 class="text-3xl my-8">Future development</h2>
             <p class="my-4">
               This project is rough and not efficient currently. Below I listed
-              some points to improve the efficiency:
+              some points to improve efficiency:
             </p>
             <h3 class="text-2xl my-4">Template</h3>
             <p class="my-4">
               Since the first supported template library requires templates in
               tsx or jsx, they must be transpiled to js in order to be executed.
               This inspired me to preprocess the template to improve
-              performance. For example, js code can be compiled to WASM.
+              performance. For example, js code can be compiled into WASM.
             </p>
             <h3 class="text-2xl my-4">Sandbox</h3>
             <p class="my-4">
@@ -161,10 +161,9 @@ export default function About() {
             </figure>
             <h3 class="text-2xl my-4">Internal server</h3>
             <p class="my-4">
-              If this project is implemented to be an internal system, the
-              current system is too complex and slow. Many parts in the system
-              can be taken away. Below is the brief image of the new
-              architecture:
+              The current system is too complex and slow for an internal
+              service. Many parts of the system can be taken away. Below is a
+              brief image of the new architecture:
             </p>
             <figure class="my-4">
               <img class="my-4" src="/internal-arch.svg" />
