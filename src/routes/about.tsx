@@ -5,183 +5,400 @@ export default function About() {
   return (
     <div class="flex flex-col h-svh">
       <Nav />
+
       <div class="flex-1 space-y-4 p-8 pt-6">
         <main class="mx-auto text-gray-700 p-4">
           <Title>About</Title>
-          <div class=" mx-auto max-w-3xl">
+
+          <div class="mx-auto max-w-3xl">
             <h1 class="max-6-xs text-4xl text-sky-700 my-16 text-center">
-              Service prototype supporting multiple languages ​​and file
-              generation templates
+              A File Generation Service Prototype for Multiple Templates and
+              Runtimes
             </h1>
+
             <h2 class="text-3xl my-8">Introduction</h2>
+
             <p class="my-4">
-              Many software services require the generation of files as part of
-              their features, even when file generation is not their primary
-              business. When file generation logic is not properly separated
-              (e.g., kept within the main service rather than on a dedicated
-              server), it can lead to potential performance issues in the
-              future. Attempting to fix these performance problems often takes
-              over two weeks and doesn't account for the additional time
-              required for maintenance. Furthermore, different features might
-              need to use various templates, formats, and methods for generating
-              files, which adds further complexity to the codebase.
+              Many software products need to generate files such as reports,
+              PDFs, or documents, even when file generation is not part of the
+              core business.
             </p>
+
             <p class="my-4">
-              We have a similar problem in my current workplace, which inspired
-              me to develop this side project. Meanwhile, I want to practice
-              some new technologies and learn about GCP. Next, I will share what
-              I learned from this project.
+              When file-generation logic stays inside the main application, it
+              can create two problems over time.
             </p>
-            <h2 class="text-3xl my-8">Analysis of the problem</h2>
+
             <p class="my-4">
-              This problem can be divided into two sub-issues below:
+              The first is performance. File generation may require a large
+              amount of CPU or memory, and heavy jobs can affect the normal
+              workload of the main service.
             </p>
-            <h3 class="text-2xl my-4">How to prevent the performance issue?</h3>
+
             <p class="my-4">
-              This issue is all about resource adaptation and whether the logic
-              is separated from the main service or not. If not, the number of
-              instances will increase or the instance of the service will get
-              more cpu and memory. If yes, the logic will be separated.
-              Depending on the frequency of use, we can choose to execute the
-              logic manually or host it on a server.
+              The second is code complexity. Different features may require
+              different templates, formats, libraries, and ways to prepare data.
+              As more use cases are added, the implementation can become harder
+              to maintain.
             </p>
+
             <p class="my-4">
-              PS. We will only discuss the case of separation logic.
+              We had a similar problem at my workplace, which inspired me to
+              explore whether file generation could be separated into a reusable
+              service.
             </p>
-            <h3 class="text-2xl my-4">How to reduce the code complexity?</h3>
+
             <p class="my-4">
-              The most straightforward approach is to modularize the logic, but
-              we can look at some more details. Regarding file generation, there
-              are two inputs, there are two inputs: data and template, which are
-              different for different files and also have their code(fetching
-              data and the templates' contents). Other pieces of code, except
-              inputs, are very similar and can be unified into the same form, so
-              they are ignored here. Then we can consider if the module contains
-              the code of these two inputs.
+              I also used this project as a way to practice new technologies and
+              learn more about GCP.
             </p>
+
+            <h2 class="text-3xl my-8">Problem Analysis</h2>
+
             <p class="my-4">
-              To sum up the above analysis, we have these four types of modules
-              for the solution:
+              I divided the problem into two main questions.
             </p>
-            <ol class=" list-decimal px-8">
+
+            <h3 class="text-2xl my-4">
+              How can file-generation workloads be isolated?
+            </h3>
+
+            <p class="my-4">
+              If file generation runs inside the main application, the
+              application may need larger instances or more instances to support
+              occasional CPU- and memory-heavy workloads.
+            </p>
+
+            <p class="my-4">
+              Another approach is to separate the generation logic from the main
+              service.
+            </p>
+
+            <p class="my-4">
+              Depending on how often it is used, the separated workload could
+              be executed manually, hosted as an independent service, or scaled
+              separately from the main application.
+            </p>
+
+            <p class="my-4">
+              For this project, I focused on the case where file-generation
+              logic is separated.
+            </p>
+
+            <h3 class="text-2xl my-4">
+              How can the code complexity be reduced?
+            </h3>
+
+            <p class="my-4">
+              Most file-generation workflows have two parts that change between
+              use cases:
+            </p>
+
+            <ul class="list-disc px-8 my-4">
+              <li>Data</li>
+              <li>Template</li>
+            </ul>
+
+            <p class="my-4">
+              Each file may have different logic for preparing its data and
+              defining its template.
+            </p>
+
+            <p class="my-4">
+              The rest of the workflow is usually similar: receive the inputs,
+              execute the generation process, and return the generated file.
+            </p>
+
+            <p class="my-4">
+              Based on where the data, templates, and generation logic are
+              placed, I identified four possible approaches:
+            </p>
+
+            <ol class="list-decimal px-8 space-y-3">
               <li>
-                Template management, which hosts templates and the generation
-                process.
+                <strong>Template management service</strong>
+                <p>Hosts templates and the generation process.</p>
               </li>
+
               <li>
-                Internal server, data warehouse service, and report service,
-                which hosts data and templates and the generation process.
-              </li>
-              <li>
-                Internal template library, which only hosts the generation
-                process.
-              </li>
-              <li>
-                Niche file generation service, which hosts data and the
-                generation process.{" "}
+                <strong>Internal report or data service</strong>
                 <p>
-                  The file generation might be a part of the main business in
-                  this case. The template is more varied than the data. (ex:
-                  resume builder, etc)
+                  Hosts the data, templates, and generation process together.
+                </p>
+              </li>
+
+              <li>
+                <strong>Internal template library</strong>
+                <p>
+                  Provides reusable generation logic inside an existing system.
+                </p>
+              </li>
+
+              <li>
+                <strong>Domain-specific file-generation service</strong>
+                <p>
+                  Hosts the data and generation process while allowing users to
+                  provide or customize templates. A resume builder is one
+                  example.
                 </p>
               </li>
             </ol>
+
             <p class="my-4">
-              The first two types will be discussed in this article. The scope
-              of the third type is too small and the scenario of the fourth is
-              too niche.
+              This project mainly explores the first approach.
             </p>
+
+            <p class="my-4">
+              The third approach is relatively small in scope, while the fourth
+              is more suitable when file generation itself is part of the main
+              product.
+            </p>
+
             <h2 class="text-3xl my-8">Implementation Plan</h2>
+
             <p class="my-4">
-              This project serves as a prototype for the first type of module,
-              which includes the public API, template management, webhook
-              settings, and basic login functionality. It is a Full-stack
-              project. The front-end stack includes typescript, solidjs,
-              solid-ui, tailwind and Vercel. The back-end stack is based on
-              Firebase and GCP service. Below are pictures of the project's
-              architecture. You can explore these features on this website and
-              check the repository for more details.
+              Easy File Gen is a prototype of a standalone file-generation
+              service.
             </p>
+
+            <p class="my-4">The current prototype includes:</p>
+
+            <ul class="list-disc px-8 my-4">
+              <li>Public API</li>
+              <li>Template management</li>
+              <li>Webhook configuration</li>
+              <li>Basic login functionality</li>
+              <li>Sandboxed template execution</li>
+            </ul>
+
+            <p class="my-4">
+              It is implemented as a full-stack project.
+            </p>
+
+            <h3 class="text-2xl my-4">Frontend</h3>
+
+            <ul class="list-disc px-8 my-4">
+              <li>TypeScript</li>
+              <li>SolidJS</li>
+              <li>Solid UI</li>
+              <li>Tailwind CSS</li>
+              <li>Vercel</li>
+            </ul>
+
+            <h3 class="text-2xl my-4">Backend</h3>
+
+            <ul class="list-disc px-8 my-4">
+              <li>Firebase</li>
+              <li>Google Cloud Platform</li>
+            </ul>
+
+            <p class="my-4">
+              The overall architecture is shown below.
+            </p>
+
             <figure class="my-4">
-              <img class="my-4" src="/overall-arch.svg" />
+              <img
+                class="my-4"
+                src="/overall-arch.svg"
+                alt="Overall architecture"
+              />
               <figcaption>Fig.1 - Overall Architecture</figcaption>
             </figure>
+
             <p class="my-4">
-              The prototype is designed as a SAAS, so its architecture is more
-              complex than that of an internal service. The sandbox is
-              particularly added to make the service more flexible. The
-              architecture can add more sandboxes for different languages and
-              libraries.
+              The prototype is designed as a SaaS product, so the architecture
+              is intentionally more complex than what would be required for an
+              internal service.
             </p>
-            <h2 class="text-3xl my-8">Future development</h2>
+
             <p class="my-4">
-              This project is rough and not efficient currently. Below I listed
-              some points to improve efficiency:
+              One important part of the design is the sandbox layer.
             </p>
-            <h3 class="text-2xl my-4">Template</h3>
+
             <p class="my-4">
-              Since the first supported template library requires templates in
-              tsx or jsx, they must be transpiled to js in order to be executed.
-              This inspired me to preprocess the template to improve
-              performance. For example, js code can be compiled into WASM.
+              The sandbox separates template execution from the main
+              application and also makes the architecture more flexible. In the
+              future, different sandboxes could support different languages,
+              runtime versions, or generation libraries.
             </p>
-            <h3 class="text-2xl my-4">Sandbox</h3>
+
+            <h2 class="text-3xl my-8">Future Development</h2>
+
             <p class="my-4">
-              If this project supports different languages and versions, it will
-              open multiple sandboxes for running templates. However it does not
-              have to open those sandboxes in the first place, it can open the
-              related sandbox when a user adds the template that asks for the
-              language.
+              The current implementation is still a prototype, and there are
+              several areas I would like to improve.
             </p>
-            <h3 class="text-2xl my-4">Download</h3>
+
+            <h3 class="text-2xl my-4">Template Processing</h3>
+
             <p class="my-4">
-              Currently, the way to get the output file is like below. But if we
-              consider more about how users use this service, we can find there
-              is a common component behind the user's server, that is the client
-              side.
+              The first supported template library uses TSX or JSX templates,
+              which need to be transformed into JavaScript before execution.
             </p>
+
+            <p class="my-4">
+              Instead of repeating this work every time a file is generated,
+              one improvement would be to preprocess the template when it is
+              created or updated.
+            </p>
+
+            <p class="my-4">
+              I would also like to explore whether other execution formats,
+              including WebAssembly in some cases, could improve startup or
+              execution performance.
+            </p>
+
+            <h3 class="text-2xl my-4">Sandbox Management</h3>
+
+            <p class="my-4">
+              If the system supports multiple languages or runtime versions, it
+              may eventually need several different sandbox environments.
+            </p>
+
+            <p class="my-4">
+              However, these environments do not all need to run all the time.
+              A better approach would be to start or prepare a sandbox only when
+              a template requires that specific runtime.
+            </p>
+
+            <p class="my-4">
+              This could reduce unnecessary resource usage while keeping the
+              system flexible.
+            </p>
+
+            <h3 class="text-2xl my-4">Download Flow</h3>
+
+            <p class="my-4">
+              The current file-generation flow is shown below.
+            </p>
+
             <figure class="my-4">
-              <img class="my-4" src="/process-1.svg" />
-              <figcaption>Fig.2 - Current file generation process</figcaption>
+              <img
+                class="my-4"
+                src="/process-1.svg"
+                alt="Current file generation process"
+              />
+              <figcaption>
+                Fig.2 - Current File Generation Process
+              </figcaption>
             </figure>
-            <figure class="my-4">
-              <img class="my-4" src="/component-behind-server.svg" />
-              <figcaption>Fig.3 - User's client</figcaption>
-            </figure>
+
             <p class="my-4">
-              If the destination of the output file for the user is their client
-              side, the service can directly communicate with the client side
-              without going through the user's backend side. For the idea, the
-              service needs to provide a library to get the file stream by
-              WebRTC (for the best efficiency).
+              In many applications, the final destination of the generated file
+              is the user's browser rather than the application's backend.
             </p>
-            <figure class="my-4">
-              <img class="my-4" src="/web-rtc-module.svg" />
-              <figcaption>Fig.4 - Client side module</figcaption>
-            </figure>
-            <h3 class="text-2xl my-4">Internal server</h3>
+
             <p class="my-4">
-              The current system is too complex and slow for an internal
-              service. Many parts of the system can be taken away. Below is a
-              brief image of the new architecture:
+              This means there may be an opportunity to remove one unnecessary
+              transfer step.
             </p>
+
             <figure class="my-4">
-              <img class="my-4" src="/internal-arch.svg" />
+              <img
+                class="my-4"
+                src="/component-behind-server.svg"
+                alt="User client"
+              />
+              <figcaption>Fig.3 - User Client</figcaption>
+            </figure>
+
+            <p class="my-4">
+              Instead of always sending the generated file through the user's
+              backend, the file-generation service could communicate more
+              directly with the client.
+            </p>
+
+            <p class="my-4">
+              One possible direction would be to provide a client-side library
+              and explore direct streaming mechanisms such as WebRTC.
+            </p>
+
+            <figure class="my-4">
+              <img
+                class="my-4"
+                src="/web-rtc-module.svg"
+                alt="Client-side module"
+              />
+              <figcaption>Fig.4 - Client-Side Module</figcaption>
+            </figure>
+
+            <p class="my-4">
+              This would require additional work around authentication,
+              security, connection management, and browser support, but it could
+              reduce unnecessary data transfer through the user's server.
+            </p>
+
+            <h3 class="text-2xl my-4">Internal Service Architecture</h3>
+
+            <p class="my-4">
+              The current architecture is designed for a public SaaS product.
+            </p>
+
+            <p class="my-4">
+              For an internal company service, many parts of the system would
+              not be necessary.
+            </p>
+
+            <figure class="my-4">
+              <img
+                class="my-4"
+                src="/internal-arch.svg"
+                alt="Internal architecture"
+              />
               <figcaption>Fig.5 - Internal Architecture</figcaption>
             </figure>
-            <p class="my-4">
-              The new arch can omit the frontend ui and the sandbox part and the
-              check server can be handled by the internal infrastructure.
-            </p>
-            <figure class="my-4">
-              <img class="my-4" src="/saved-space.svg" />
-              <figcaption>Fig.6 - Omitted components</figcaption>
-            </figure>
-          </div>
 
-          <a href="https://github.com/gjccing/easy-file-gen">
-            https://github.com/gjccing/easy-file-gen
-          </a>
+            <p class="my-4">
+              For example, the frontend management UI could be removed if
+              templates were managed through internal tools.
+            </p>
+
+            <p class="my-4">
+              The sandbox layer could also be simplified if the company
+              controlled all templates and execution environments.
+            </p>
+
+            <p class="my-4">
+              Authentication and access control could rely on existing internal
+              infrastructure instead of being implemented inside this service.
+            </p>
+
+            <figure class="my-4">
+              <img
+                class="my-4"
+                src="/saved-space.svg"
+                alt="Components that could be removed"
+              />
+              <figcaption>Fig.6 - Components That Could Be Removed</figcaption>
+            </figure>
+
+            <p class="my-4">
+              This would result in a much smaller architecture for internal use.
+            </p>
+
+            <p class="my-4">
+              The project helped me understand that the same technical problem
+              can require very different architectures depending on the
+              environment.
+            </p>
+
+            <p class="my-4">
+              A public SaaS product needs stronger isolation, user management,
+              and flexibility. An internal service can often be much simpler
+              because it can reuse existing infrastructure and trust boundaries.
+            </p>
+
+            <div class="my-10">
+              <a
+                class="text-sky-700 underline"
+                href="https://github.com/gjccing/easy-file-gen"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View source code on GitHub
+              </a>
+            </div>
+          </div>
         </main>
       </div>
     </div>

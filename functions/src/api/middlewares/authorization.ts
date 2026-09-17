@@ -11,6 +11,7 @@ const authorization: RequestHandler = async (req, res, next) => {
       const payload: { userId: string; expiresAt?: number } = JSON.parse(
         Buffer.from(token.split(".")[1], "base64").toString()
       );
+
       if (payload.expiresAt && payload.expiresAt >= Date.now()) return;
       const settings = await repository.fetchById(payload.userId);
       if (!settings) return;
